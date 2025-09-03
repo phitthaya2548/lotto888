@@ -7,11 +7,7 @@ class LottoHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-<<<<<<< HEAD
-      body: Center(child: Text('HomePage')),
-=======
       body: Center(child: Text('Home page')),
->>>>>>> feature/home-page
     );
   }
 }

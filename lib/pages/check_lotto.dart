@@ -12,9 +12,8 @@ class _CheckLottoState extends State<CheckLotto> {
   Widget build(BuildContext context) {
     return Material(
       child: Center(
-        child: Text('check'),
+        child: Text('CheckPage'),
       ),
-      
     );
   }
 }

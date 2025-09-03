@@ -15,9 +15,6 @@ class _RegisterPageState extends State<Register> {
   final _password = TextEditingController();
   final _confirm = TextEditingController();
   bool _showPass = false;
-
-  bool _hideConfirm = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

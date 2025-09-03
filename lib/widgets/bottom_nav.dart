@@ -90,16 +90,16 @@ class _MemberShellState extends State<MemberShell> {
                   NavigationDestination(
                     icon: SvgPicture.asset(
                       'assets/images/Home.svg',
-                      width: 24,
-                      height: 24,
+                      width: 28,
+                      height: 28,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
                     ),
                     selectedIcon: SvgPicture.asset(
                       'assets/images/Home.svg',
-                      width: 28,
-                      height: 28,
+                      width: 32,
+                      height: 32,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
@@ -109,16 +109,16 @@ class _MemberShellState extends State<MemberShell> {
                   NavigationDestination(
                     icon: SvgPicture.asset(
                       'assets/images/Ticket_use.svg',
-                      width: 24,
-                      height: 24,
+                      width: 28,
+                      height: 28,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
                     ),
                     selectedIcon: SvgPicture.asset(
                       'assets/images/Ticket_use.svg',
-                      width: 28,
-                      height: 28,
+                      width: 32,
+                      height: 32,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
@@ -130,16 +130,16 @@ class _MemberShellState extends State<MemberShell> {
                   NavigationDestination(
                     icon: Image.asset(
                       'assets/images/Logo.png',
-                      width: 24,
-                      height: 24,
+                      width: 28,
+                      height: 28,
                       fit: BoxFit.contain,
                       color: Colors.grey,
                       colorBlendMode: BlendMode.srcIn,
                     ),
                     selectedIcon: Image.asset(
                       'assets/images/Logo.png',
-                      width: 28,
-                      height: 28,
+                      width: 32,
+                      height: 32,
                       fit: BoxFit.contain,
                       color: Colors.blue,
                       colorBlendMode: BlendMode.srcIn,
@@ -150,16 +150,16 @@ class _MemberShellState extends State<MemberShell> {
                   NavigationDestination(
                     icon: SvgPicture.asset(
                       'assets/images/Wallet.svg',
-                      width: 24,
-                      height: 24,
+                      width: 28,
+                      height: 28,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
                     ),
                     selectedIcon: SvgPicture.asset(
                       'assets/images/Wallet.svg',
-                      width: 28,
-                      height: 28,
+                      width: 32,
+                      height: 32,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
@@ -169,16 +169,16 @@ class _MemberShellState extends State<MemberShell> {
                   NavigationDestination(
                     icon: SvgPicture.asset(
                       'assets/images/User_alt.svg',
-                      width: 24,
-                      height: 24,
+                      width: 28,
+                      height: 28,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
                     ),
                     selectedIcon: SvgPicture.asset(
                       'assets/images/User_alt.svg',
-                      width: 28,
-                      height: 28,
+                      width: 32,
+                      height: 32,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.blue, BlendMode.srcIn),

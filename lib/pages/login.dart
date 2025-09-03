@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:lotto/pages/home_lotto.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
-
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {

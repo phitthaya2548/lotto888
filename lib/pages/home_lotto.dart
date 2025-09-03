@@ -7,7 +7,7 @@ class LottoHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: Text('หน้าหลักก จริงงๆ นะ')),
+      body: Center(child: Text('HomePage')),
     );
   }
 }

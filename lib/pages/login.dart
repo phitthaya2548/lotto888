@@ -1,5 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lotto/pages/home_lotto.dart';
+import 'package:lotto/widgets/bottom_nav.dart';
+
+import 'register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -178,7 +182,14 @@ class _LoginPageState extends State<LoginPage> {
                                     borderRadius: BorderRadius.circular(18),
                                   ),
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MemberShell(),
+                                  ),
+                                );
+                                },
                                 child: _busy
                                     ? const SizedBox(
                                         width: 22,
@@ -283,9 +294,15 @@ class _LoginPageState extends State<LoginPage> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 0),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const Register(),
+                                  ),
+                                );
+                              },
                               child: const Text(
                                 "Register",
                                 style: TextStyle(
@@ -295,6 +312,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 5),
                           ],
                         ),
                       ),

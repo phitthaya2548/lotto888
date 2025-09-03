@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lotto/pages/login.dart';
 
+import 'register.dart';
+
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
@@ -84,7 +86,9 @@ class WelcomePage extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20)),
                             ),
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const Register()));
+                            },
                             child: const Text(
                               "Sign up",
                               style: TextStyle(

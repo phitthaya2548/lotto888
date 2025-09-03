@@ -46,7 +46,6 @@ class _LottoHomeState extends State<LottoHome> {
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFEAF2FF),
 
-      // ===== Drawer ซ้าย =====
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -92,7 +91,6 @@ class _LottoHomeState extends State<LottoHome> {
                         color: Colors.white),
                   ),
                 ]),
-                // ปุ่มเมนู เปิด Drawer
                 IconButton(
                   icon: const Icon(Icons.menu, size: 42, color: Colors.white),
                   onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -101,7 +99,6 @@ class _LottoHomeState extends State<LottoHome> {
             ),
           ),
 
-          // ===== การ์ดตรวจสลาก =====
           Align(
             alignment: Alignment.topCenter,
             child: Card(
@@ -125,8 +122,6 @@ class _LottoHomeState extends State<LottoHome> {
                             color: Color(0xFF2196F3)),
                       ),
                       const SizedBox(height: 12),
-
-                      // Dropdown งวด
                       DropdownButtonFormField<String>(
                         isExpanded: true,
                         value: _selectedDraw,
@@ -155,7 +150,7 @@ class _LottoHomeState extends State<LottoHome> {
 
                       const SizedBox(height: 16),
 
-                      // ช่องกรอกเลข 6 หลัก
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: List.generate(6, (index) {
@@ -165,7 +160,6 @@ class _LottoHomeState extends State<LottoHome> {
                               onChanged: (val) {
                                 if (val.isEmpty) return;
                                 digits[index] = val[0];
-                                // ไปช่องถัดไปอัตโนมัติ
                                 if (index < 5) {
                                   FocusScope.of(context).nextFocus();
                                 } else {
@@ -211,7 +205,6 @@ class _LottoHomeState extends State<LottoHome> {
 
                       const SizedBox(height: 16),
 
-                      // ปุ่มตรวจ
                       ElevatedButton(
                         onPressed: _checkLotto,
                         style: ElevatedButton.styleFrom(

@@ -1,10 +1,10 @@
 import 'dart:convert';
-
+import 'dart:developer';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lotto/widgets/bottom_nav.dart';
-
 import '../config/config.dart';
 import '../models/request/req_login.dart';
 import 'register.dart';
@@ -60,15 +60,24 @@ class _LoginPageState extends State<LoginPage> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(req.toJson()),
       );
-
       if (!mounted) return;
-
       if (resp.statusCode == 200) {
-        //final data = jsonDecode(resp.body) as Map<String, dynamic>;
-        //final token = data['token'] as String?;
+        final data = jsonDecode(resp.body);
+        final token = data['token'];
+        final user = data['user'];
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setString('token', token);
+        await prefs.setInt('user_id', user['id']);
+        await prefs.setString('username', user['username']);
+        await prefs.setBool('isLoggedIn', true);
+        log("Saved token = ${prefs.getString('token')}");
+        log("Saved user_id = ${prefs.getInt('user_id')}");
+        log("Saved username = ${prefs.getString('username')}");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
         );
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MemberShell()),

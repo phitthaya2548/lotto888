@@ -36,7 +36,7 @@ dependencies:
   firebase_core: ^4.1.0
   firebase_auth: ^6.0.2
   google_sign_in: ^7.1.1
-
+  shared_preferences: ^2.3.2
 # ไม่ต้องใส่ dependency_overrides แล้ว ปล่อยให้มันจัดการเวอร์ชันเอง
 
 dev_dependencies:

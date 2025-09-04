@@ -4,7 +4,8 @@ import 'package:lotto/pages/welcome_page.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
 
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

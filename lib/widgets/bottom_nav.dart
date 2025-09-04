@@ -3,7 +3,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lotto/pages/check_lotto.dart';
 import 'package:lotto/pages/member/wallet_lotto.dart';
 
+import '../pages/auth_service.dart';
 import '../pages/home_lotto.dart';
+import '../pages/login.dart';
 import '../pages/member/buy_lotto.dart';
 import '../pages/member/profile_lotto.dart';
 
@@ -17,7 +19,7 @@ class _MemberShellState extends State<MemberShell> {
   int _index = 0;
 
   final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
-
+ final Set<int> _protectedTabs = {2, 3, 4};
   late final _tabRoots = <Widget>[
     const LottoHome(),
     const BuyTicket(),
@@ -25,16 +27,51 @@ class _MemberShellState extends State<MemberShell> {
     const WalletLotto(),
     const ProfileLotto(),
   ];
+Future<bool?> _askLogin(BuildContext ctx) {
+  return showDialog<bool>(
+    context: ctx,
+    builder: (_) => AlertDialog(
+      title: const Text('ยังไม่ได้เข้าสู่ระบบ'),
+      content: const Text('คุณต้องล็อกอินก่อนเพื่อเข้าใช้งานเมนูนี้'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false), 
+          child: const Text('ยกเลิก'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(ctx, true), 
+          child: const Text('ไปหน้า Login'),
+        ),
+      ],
+    ),
+  );
+}
 
-  void _onSelectTab(int i) {
+   Future<void> _onSelectTab(int i) async {
     if (_index == i) {
       final nav = _navKeys[i].currentState!;
       while (nav.canPop()) nav.pop();
-    } else {
-      setState(() => _index = i);
+      return;
     }
-  }
+    if (_protectedTabs.contains(i)) {
+      final ok = await AuthService.isLoggedIn();
+      if (!ok) {
+        final goLogin = await _askLogin(context);
+        if (goLogin == true) {
+        
+          final loggedIn = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+          );
+          if (loggedIn == true) {
+            setState(() => _index = i);
+          }
+        }
+        return;
+      }
+    }
 
+    setState(() => _index = i);
+  }
   Widget _buildTabNavigator(int i) {
     return Navigator(
       key: _navKeys[i],

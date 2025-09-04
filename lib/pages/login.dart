@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:lotto/widgets/bottom_nav.dart';
+
+import '../config/config.dart';
+import '../models/request/req_login.dart';
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,16 +18,78 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
+  final _username = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _showPass = false;
   bool _busy = false;
-
+  String url = '';
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _username.dispose();
     _passCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Configuration.getConfig().then(
+      (config) {
+        url = config['apiEndpoint'];
+      },
+    );
+  }
+
+  Future<void> login() async {
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('API endpoint ยังไม่พร้อม')),
+      );
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      final req = Requestlogin(
+        username: _username.text.trim(),
+        password: _passCtrl.text,
+      );
+      final uri = Uri.parse('$url/login');
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(req.toJson()),
+      );
+
+      if (!mounted) return;
+
+      if (resp.statusCode == 200) {
+        //final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        //final token = data['token'] as String?;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MemberShell()),
+        );
+      } else if (resp.statusCode == 401) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Username หรือ Password ไม่ถูกต้อง')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ผิดพลาด: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -80,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 18),
                             TextFormField(
-                              controller: _emailCtrl,
+                              controller: _username,
                               decoration: InputDecoration(
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.all(12),
@@ -91,7 +159,7 @@ class _LoginPageState extends State<LoginPage> {
                                     fit: BoxFit.contain,
                                   ),
                                 ),
-                                labelText: "Email",
+                                labelText: "Username",
                                 labelStyle: const TextStyle(
                                   color: CupertinoColors.inactiveGray,
                                   fontSize: 16,
@@ -114,12 +182,6 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               keyboardType: TextInputType.emailAddress,
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return "กรอก Email";
-                                final ok =
-                                    RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v);
-                                return ok ? null : "Email ไม่ถูกต้อง";
-                              },
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
@@ -181,12 +243,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MemberShell(),
-                                  ),
-                                );
+                                  login();
                                 },
                                 child: _busy
                                     ? const SizedBox(

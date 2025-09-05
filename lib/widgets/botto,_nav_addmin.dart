@@ -227,11 +227,10 @@ Future<bool?> _askLogin(BuildContext ctx) {
               ),
             ),
             Positioned(
-              top: -45,
+              top: -40,
               child: GestureDetector(
                 onTap: () => _onSelectTab(2),
                 child: Material(
-                  elevation: 3,
                   color: Colors.white,
                   shape: const CircleBorder(),
                   child: Container(

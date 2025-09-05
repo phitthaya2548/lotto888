@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/pages/home_lotto.dart';
 import 'package:lotto/widgets/app_drawer.dart';
+import 'package:lotto/widgets/app_header.dart';
 
 class ProfileLotto extends StatelessWidget {
   const ProfileLotto({super.key});
@@ -19,6 +20,7 @@ class ProfileLotto extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
+      appBar: AppHeader(),
       drawer: const AppDrawer(),
       body: SingleChildScrollView(
         child: Column(
@@ -28,7 +30,7 @@ class ProfileLotto extends StatelessWidget {
               child: Stack(
                 children: [
                   Container(
-                    height: 180,
+                    height: 280,
                     width: double.infinity,
                     color: const Color(0xFF2196F3),
                     padding: const EdgeInsets.symmetric(
@@ -36,31 +38,51 @@ class ProfileLotto extends StatelessWidget {
                     child: SafeArea(
                       bottom: false,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: const [
-                          SizedBox(height: 8),
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.white,
-                            child: Icon(Icons.person,
-                                size: 40, color: Colors.black54),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const CircleAvatar(
+                                radius: 30,
+                                backgroundColor: Colors.white,
+                                child: Icon(Icons.person,
+                                    size: 40, color: Colors.black54),
+                              ),
+                              const SizedBox(width: 18),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Text(
+                                    "ชื่อ >",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    "รหัสสมาชิก : L1234",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 8),
-                          Text("ชื่อ >",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          Text("รหัสสมาชิก : L1234",
-                              style: TextStyle(color: Colors.white70)),
                         ],
                       ),
                     ),
                   ),
-
-                  // กล่องเงินของฉัน (สีขาว) ลอยทับลงมา
                   Positioned(
                     left: 12,
                     right: 12,
-                    top: 140,
+                    top: 100,
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -86,24 +108,62 @@ class ProfileLotto extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Divider(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: const [
-                              _Stat(
-                                  icon: Icons.attach_money,
-                                  line1: '0',
-                                  line2: 'พอยต์'),
-                              _Stat(
-                                  icon: Icons.confirmation_number,
-                                  line1: '0',
-                                  line2: 'สลากของฉัน'),
-                              _Stat(
-                                  icon: Icons.percent,
-                                  line1: '0',
-                                  line2: 'คูปอง'),
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset('assets/images/bitcoin.png',
+                                        width: 32, height: 32),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      "0",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    const Text("พอยต์"),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset('assets/images/tiket1.png',
+                                        width: 32, height: 32),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      "0",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    const Text("สลากของฉัน"),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset('assets/images/copon.png',
+                                        width: 32, height: 32),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      "0",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    const Text("คูปอง"),
+                                  ],
+                                ),
+                              ),
                             ],
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -111,69 +171,163 @@ class ProfileLotto extends StatelessWidget {
                 ],
               ),
             ),
-
-            // ===== คูปองส่วนลด =====
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: ListTile(
-                leading: const Icon(Icons.local_offer, size: 40),
-                title: const Text("คูปองส่วนลด"),
-                subtitle: ElevatedButton(
-                  onPressed: () {},
-                  child: const Text("ใส่รหัสคูปอง"),
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('คูปองส่วนลด',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold))),
                 ),
-                trailing: const Text("เก็บคูปอง"),
+                Card(
+                  color: Colors.white,
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Image.asset('assets/images/copon.png',
+                            width: 80, height: 80),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "เก็บคูปอง",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const Spacer(),
+                        ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black87,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: const Text("ใส่รหัสคูปอง"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('ข้อมูลมาชิก',
+                      style: TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold))),
+            ),
+            Card(
+              color: Colors.white,
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {},
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/account_circle.png',
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          "ข้อมูลส่วนตัว",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, color: Colors.black54),
+                    ],
+                  ),
+                ),
               ),
             ),
-
             Card(
+              color: Colors.white,
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Column(
-                children: const [
-                  ListTile(
-                    leading: Icon(Icons.person),
-                    title: Text("ข้อมูลส่วนตัว"),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {},
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/Frame.png',
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          "ที่อยู่",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, color: Colors.black54),
+                    ],
                   ),
-                  Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.location_on),
-                    title: Text("ที่อยู่"),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                  ),
-                ],
+                ),
               ),
             ),
-
             Card(
+              color: Colors.white,
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: TextButton(
-                  onPressed: () {
-                    _logout(context);
-                  },
-                  child: Text("ออกจากระบบ")),
-            ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  _logout(context);
+                },
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/leave.png',
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          "ออกจากระบบ",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, color: Colors.black54),
+                    ],
+                  ),
+                ),
+              ),
+            )
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  final IconData icon;
-  final String line1;
-  final String line2;
-  const _Stat({required this.icon, required this.line1, required this.line2});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon),
-        Text(line1, style: const TextStyle(fontWeight: FontWeight.w600)),
-        Text(line2, textAlign: TextAlign.center),
-      ],
     );
   }
 }

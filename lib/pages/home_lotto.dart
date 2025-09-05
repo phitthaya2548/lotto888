@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../widgets/app_drawer.dart';
 
@@ -72,7 +71,6 @@ class _LottoHomeState extends State<LottoHome> {
                       ),
                     ),
                   ]),
-
                   IconButton(
                     icon: const Icon(Icons.menu, size: 42, color: Colors.white),
                     onPressed: () => Scaffold.of(scaffoldCtx).openDrawer(),
@@ -105,7 +103,6 @@ class _LottoHomeState extends State<LottoHome> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
                         DropdownButtonFormField<String>(
                           isExpanded: true,
                           value: _selectedDraw,
@@ -132,9 +129,7 @@ class _LottoHomeState extends State<LottoHome> {
                           onChanged: (value) =>
                               setState(() => _selectedDraw = value),
                         ),
-
                         const SizedBox(height: 16),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: List.generate(6, (index) {
@@ -150,7 +145,6 @@ class _LottoHomeState extends State<LottoHome> {
                                     FocusScope.of(context).unfocus();
                                   }
                                 },
-                              
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontFamily: "Roboto",
@@ -173,8 +167,7 @@ class _LottoHomeState extends State<LottoHome> {
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30),
                                     borderSide: const BorderSide(
-                                      color:
-                                          Color.fromARGB(255, 115, 122, 128),
+                                      color: Color.fromARGB(255, 115, 122, 128),
                                       width: 2,
                                     ),
                                   ),
@@ -184,9 +177,7 @@ class _LottoHomeState extends State<LottoHome> {
                             );
                           }),
                         ),
-
                         const SizedBox(height: 16),
-
                         ElevatedButton(
                           onPressed: _checkLotto,
                           style: ElevatedButton.styleFrom(
@@ -214,6 +205,7 @@ class _LottoHomeState extends State<LottoHome> {
                 ),
               ),
             ),
+            
           ],
         ),
       ),

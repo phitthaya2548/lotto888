@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:lotto/pages/admin/home_addmin_lotto.dart';
+import 'package:lotto/pages/admin/widgets/nav_admin.dart';
 import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
         Widget nextPage;
         switch (role) {
           case 'ADMIN':
-            nextPage = const HomeAddminLotto();
+            nextPage = const AdminNav();
             break;
           case 'MEMBER':
             nextPage = const MemberShell();

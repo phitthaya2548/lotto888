@@ -22,8 +22,31 @@ class _AdminNavState extends State<AdminNav> {
   final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
  final Set<int> _protectedTabs = {2, 3, 4};
   late final _tabRoots = <Widget>[
-    HomeAddminLotto()
+    const LottoHome(),
+    const BuyTicket(),
+    const CheckLotto(),
+    const WalletLotto(),
+    const ProfileLotto(),
   ];
+Future<bool?> _askLogin(BuildContext ctx) {
+  return showDialog<bool>(
+    context: ctx,
+    builder: (_) => AlertDialog(
+      title: const Text('ยังไม่ได้เข้าสู่ระบบ'),
+      content: const Text('คุณต้องล็อกอินก่อนเพื่อเข้าใช้งานเมนูนี้'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false), 
+          child: const Text('ยกเลิก'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(ctx, true), 
+          child: const Text('ไปหน้า Login'),
+        ),
+      ],
+    ),
+  );
+}
 
    Future<void> _onSelectTab(int i) async {
     if (_index == i) {
@@ -31,6 +54,23 @@ class _AdminNavState extends State<AdminNav> {
       while (nav.canPop()) nav.pop();
       return;
     }
+    if (_protectedTabs.contains(i)) {
+      final ok = await AuthService.isLoggedIn();
+      if (!ok) {
+        final goLogin = await _askLogin(context);
+        if (goLogin == true) {
+        
+          final loggedIn = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+          );
+          if (loggedIn == true) {
+            setState(() => _index = i);
+          }
+        }
+        return;
+      }
+    }
+
     setState(() => _index = i);
   }
   Widget _buildTabNavigator(int i) {
@@ -102,11 +142,11 @@ class _AdminNavState extends State<AdminNav> {
                       colorFilter:
                           const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
                     ),
-                    label: 'หน้าหลัก',
+                    label: 'หน้าหลักแอด',
                   ),
-                   NavigationDestination(
+                  NavigationDestination(
                     icon: SvgPicture.asset(
-                      'assets/images/Home.svg',
+                      'assets/images/Ticket_use.svg',
                       width: 28,
                       height: 28,
                       fit: BoxFit.contain,
@@ -114,18 +154,94 @@ class _AdminNavState extends State<AdminNav> {
                           const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
                     ),
                     selectedIcon: SvgPicture.asset(
-                      'assets/images/Home.svg',
+                      'assets/images/Ticket_use.svg',
                       width: 32,
                       height: 32,
                       fit: BoxFit.contain,
                       colorFilter:
                           const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
                     ),
-                    label: 'หน้าหลัก',
+                    label: 'ซื้อเลข',
                   ),
-                  
-                 
+
+                  // ปล่อยแท็บกลางไว้ปกติ (มี label แสดงตาม NavigationBar)
+                  NavigationDestination(
+                    icon: Image.asset(
+                      'assets/images/Logo.png',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.contain,
+                      color: Colors.grey,
+                      colorBlendMode: BlendMode.srcIn,
+                    ),
+                    selectedIcon: Image.asset(
+                      'assets/images/Logo.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                      color: Colors.blue,
+                      colorBlendMode: BlendMode.srcIn,
+                    ),
+                    label: 'ซื้อลอตโต้',
+                  ),
+
+                  NavigationDestination(
+                    icon: SvgPicture.asset(
+                      'assets/images/Wallet.svg',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.contain,
+                      colorFilter:
+                          const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+                    ),
+                    selectedIcon: SvgPicture.asset(
+                      'assets/images/Wallet.svg',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                      colorFilter:
+                          const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
+                    ),
+                    label: 'Wallet',
+                  ),
+                  NavigationDestination(
+                    icon: SvgPicture.asset(
+                      'assets/images/User_alt.svg',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.contain,
+                      colorFilter:
+                          const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+                    ),
+                    selectedIcon: SvgPicture.asset(
+                      'assets/images/User_alt.svg',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                      colorFilter:
+                          const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
+                    ),
+                    label: 'ฉัน',
+                  ),
                 ],
+              ),
+            ),
+            Positioned(
+              top: -45,
+              child: GestureDetector(
+                onTap: () => _onSelectTab(2),
+                child: Material(
+                  elevation: 3,
+                  color: Colors.white,
+                  shape: const CircleBorder(),
+                  child: Container(
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                    child: Image.asset(
+                      'assets/images/logo1.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

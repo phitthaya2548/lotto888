@@ -1,12 +1,17 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:lotto/pages/admin/home_addmin_lotto.dart';
+import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../config/config.dart';
 import '../models/request/req_login.dart';
+import '../models/response/res_login.dart';
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {
@@ -50,55 +55,52 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _busy = true);
     try {
-      final req = Requestlogin(
-        username: _username.text.trim(),
-        password: _passCtrl.text,
-      );
-      final uri = Uri.parse('$url/login');
       final resp = await http.post(
-        uri,
+        Uri.parse('$url/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(req.toJson()),
+        body: jsonEncode(Requestlogin(
+          username: _username.text.trim(),
+          password: _passCtrl.text,
+        ).toJson()),
       );
-      if (!mounted) return;
+
       if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        final token = data['token'];
-        final user = data['user'];
+        
+        final res = responseloginFromJson(resp.body);
         final prefs = await SharedPreferences.getInstance();
+        log("role = ${res.user.role}");
+        final role = (res.user.role ?? '').toString().toUpperCase();
+        Widget nextPage;
+switch (role) {
+  case 'ADMIN':
+    nextPage = const HomeAddminLotto();
+    break;
+  case 'MEMBER':
+    nextPage = const MemberShell();
+    break;
+  default:
+    nextPage = const MemberShell();
+}
 
-        await prefs.setString('token', token);
-        await prefs.setInt('user_id', user['id']);
-        await prefs.setString('username', user['username']);
-        await prefs.setBool('isLoggedIn', true);
-        log("Saved token = ${prefs.getString('token')}");
-        log("Saved user_id = ${prefs.getInt('user_id')}");
-        log("Saved username = ${prefs.getString('username')}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MemberShell()),
-        );
-      } else if (resp.statusCode == 401) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Username หรือ Password ไม่ถูกต้อง')),
-        );
+Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(builder: (_) => nextPage),
+);
+        await AuthService.saveSession(res);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})')),
-        );
+        final msg = (jsonDecode(resp.body)['message'] ??
+                'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})')
+            .toString();
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('ผิดพลาด: $e')),
       );
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
+
+    setState(() => _busy = false);
   }
 
   @override

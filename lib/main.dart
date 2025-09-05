@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lotto/pages/home_lotto.dart';
-import 'package:lotto/pages/welcome_page.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
-      ), 
+      ),
       home: const MemberShell(),
     );
   }

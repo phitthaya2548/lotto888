@@ -65,27 +65,26 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (resp.statusCode == 200) {
-        
         final res = responseloginFromJson(resp.body);
         final prefs = await SharedPreferences.getInstance();
         log("role = ${res.user.role}");
         final role = (res.user.role ?? '').toString().toUpperCase();
         Widget nextPage;
-switch (role) {
-  case 'ADMIN':
-    nextPage = const HomeAddminLotto();
-    break;
-  case 'MEMBER':
-    nextPage = const MemberShell();
-    break;
-  default:
-    nextPage = const MemberShell();
-}
+        switch (role) {
+          case 'ADMIN':
+            nextPage = const HomeAddminLotto();
+            break;
+          case 'MEMBER':
+            nextPage = const MemberShell();
+            break;
+          default:
+            nextPage = const MemberShell();
+        }
 
-Navigator.pushReplacement(
-  context,
-  MaterialPageRoute(builder: (_) => nextPage),
-);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => nextPage),
+        );
         await AuthService.saveSession(res);
       } else {
         final msg = (jsonDecode(resp.body)['message'] ??

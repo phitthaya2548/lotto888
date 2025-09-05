@@ -1,190 +1,179 @@
 import 'package:flutter/material.dart';
+import 'package:lotto/pages/auth_service.dart';
+import 'package:lotto/pages/home_lotto.dart';
+import 'package:lotto/widgets/app_drawer.dart';
 
 class ProfileLotto extends StatelessWidget {
   const ProfileLotto({super.key});
+  Future<void> _logout(BuildContext context) async {
+    await AuthService.clear();
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LottoHome()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    const blue = Color(0xFF0D74FF);
-    const lightBg = Color(0xFFF2F6FF);
-
     return Scaffold(
-      backgroundColor: lightBg,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                height: 300,
-                color: const Color(0xFF2196F3),
-                padding:
-                    const EdgeInsets.only(left: 10, right: 10, bottom: 200),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(children: [
-                      Image.asset("assets/images/smalllogo.png",
-                          fit: BoxFit.cover, height: 40),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "Lotto 888",
-                        style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
+      backgroundColor: Colors.blue[50],
+      drawer: const AppDrawer(),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 280,
+              child: Stack(
+                children: [
+                  Container(
+                    height: 180,
+                    width: double.infinity,
+                    color: const Color(0xFF2196F3),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: const [
+                          SizedBox(height: 8),
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.person,
+                                size: 40, color: Colors.black54),
+                          ),
+                          SizedBox(height: 8),
+                          Text("ชื่อ >",
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16)),
+                          Text("รหัสสมาชิก : L1234",
+                              style: TextStyle(color: Colors.white70)),
+                        ],
                       ),
-                    ]),
-                  ],
-                ),
+                    ),
+                  ),
+
+                  // กล่องเงินของฉัน (สีขาว) ลอยทับลงมา
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    top: 140,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.credit_card, size: 40),
+                              SizedBox(width: 10),
+                              Text(
+                                "เงินของฉัน\n0.00",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: const [
+                              _Stat(
+                                  icon: Icons.attach_money,
+                                  line1: '0',
+                                  line2: 'พอยต์'),
+                              _Stat(
+                                  icon: Icons.confirmation_number,
+                                  line1: '0',
+                                  line2: 'สลากของฉัน'),
+                              _Stat(
+                                  icon: Icons.percent,
+                                  line1: '0',
+                                  line2: 'คูปอง'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
 
-              const SizedBox(height: 12),
-
-              // ---------------- การ์ดเงินของฉัน ----------------
-              _sectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("เงินของฉัน",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Icon(Icons.credit_card, size: 30),
-                        const SizedBox(width: 10),
-                        const Text("0.00",
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w700)),
-                        const Spacer(),
-                        _miniStat(Icons.monetization_on, "พอยต์", "0"),
-                        _dividerV(),
-                        _miniStat(Icons.confirmation_number, "สลากของฉัน", "0"),
-                        _dividerV(),
-                        _miniStat(Icons.local_activity, "คูปอง", "0"),
-                      ],
-                    )
-                  ],
+            // ===== คูปองส่วนลด =====
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: ListTile(
+                leading: const Icon(Icons.local_offer, size: 40),
+                title: const Text("คูปองส่วนลด"),
+                subtitle: ElevatedButton(
+                  onPressed: () {},
+                  child: const Text("ใส่รหัสคูปอง"),
                 ),
+                trailing: const Text("เก็บคูปอง"),
               ),
+            ),
 
-              // ---------------- คูปอง ----------------
-              _sectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("คูปองส่วนลด",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _actionButton(
-                              "เก็บคูปอง", Icons.local_activity,
-                              onTap: () {}),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _actionButton("ใส่รหัสคูปอง", Icons.key,
-                              filled: true, onTap: () {}),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Column(
+                children: const [
+                  ListTile(
+                    leading: Icon(Icons.person),
+                    title: Text("ข้อมูลส่วนตัว"),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                  ),
+                  Divider(height: 1),
+                  ListTile(
+                    leading: Icon(Icons.location_on),
+                    title: Text("ที่อยู่"),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                  ),
+                ],
               ),
+            ),
 
-              // ---------------- ข้อมูลสมาชิก ----------------
-              _sectionCard(
-                child: Column(
-                  children: [
-                    _listTile(Icons.person_outline, "ข้อมูลส่วนตัว",
-                        onTap: () {}),
-                    const Divider(height: 1),
-                    _listTile(Icons.local_shipping_outlined, "ที่อยู่",
-                        onTap: () {}),
-                    const Divider(height: 1),
-                    _listTile(Icons.logout, "ออกจากระบบ", color: Colors.red,
-                        onTap: () {
-                      // TODO: ใส่โค้ด logout
-                    }),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 80),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------------- Helper Widgets ----------------
-  static Widget _sectionCard({required Widget child}) => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: TextButton(
+                  onPressed: () {
+                    _logout(context);
+                  },
+                  child: Text("ออกจากระบบ")),
             ),
           ],
         ),
-        child: child,
-      );
-
-  static Widget _miniStat(IconData icon, String label, String value) => Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.black54),
-          const SizedBox(width: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54)),
-            ],
-          )
-        ],
-      );
-
-  static Widget _dividerV() => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        width: 1,
-        height: 24,
-        color: const Color(0xFFE0E0E0),
-      );
-
-  static Widget _actionButton(String text, IconData icon,
-      {bool filled = false, VoidCallback? onTap}) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: filled ? Colors.black : Colors.white,
-        foregroundColor: filled ? Colors.white : Colors.black87,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        side: const BorderSide(color: Color(0xFFE0E0E0)),
-        elevation: 0,
       ),
-      icon: Icon(icon, size: 18),
-      label: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
-      onPressed: onTap,
     );
   }
+}
 
-  static Widget _listTile(IconData icon, String title,
-      {Color color = Colors.black87, VoidCallback? onTap}) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
-      leading: Icon(icon, color: color),
-      title: Text(title,
-          style: TextStyle(fontWeight: FontWeight.w600, color: color)),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
+class _Stat extends StatelessWidget {
+  final IconData icon;
+  final String line1;
+  final String line2;
+  const _Stat({required this.icon, required this.line1, required this.line2});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon),
+        Text(line1, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(line2, textAlign: TextAlign.center),
+      ],
     );
   }
 }

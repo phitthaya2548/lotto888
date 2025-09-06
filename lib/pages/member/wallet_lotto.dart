@@ -8,7 +8,7 @@ class WalletLotto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const brand = Color(0xFF0593FF);
+    const brand = Color(0xFF007BFF);
     return Scaffold(
       backgroundColor: const Color(0xFFEAF2FF),
       appBar: AppHeader(),
@@ -45,7 +45,10 @@ class WalletLotto extends StatelessWidget {
                     children: const [
                       Text(
                         "ยอดเงินคงเหลือ",
-                        style: TextStyle(color: Colors.white, fontSize: 16,fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: 8),
                       Text(
@@ -74,7 +77,6 @@ class WalletLotto extends StatelessWidget {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

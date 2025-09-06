@@ -10,7 +10,7 @@ class AppDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: const [
           DrawerHeader(
-            decoration: BoxDecoration(color: Color(0xFF2196F3)),
+            decoration: BoxDecoration(color: Color(0xFF007BFF),),
             child: Text('เมนู Lotto 888',
                 style: TextStyle(color: Colors.white, fontSize: 22)),
           ),

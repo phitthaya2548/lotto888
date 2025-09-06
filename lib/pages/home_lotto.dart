@@ -40,173 +40,188 @@ class _LottoHomeState extends State<LottoHome> {
 
   @override
   Widget build(BuildContext context) {
-    const headerHeight = 300.0;
+    const brand = Color(0xFF007BFF);
+
+
     return Scaffold(
       backgroundColor: const Color(0xFFEAF2FF),
       drawer: const AppDrawer(),
-      body: Builder(
-        builder: (scaffoldCtx) => Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              height: headerHeight,
-              color: const Color(0xFF2196F3),
-              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 200),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(children: [
-                    Image.asset(
-                      "assets/images/smalllogo.png",
-                      fit: BoxFit.cover,
-                      height: 40,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      "Lotto 888",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ]),
-                  IconButton(
-                    icon: const Icon(Icons.menu, size: 42, color: Colors.white),
-                    onPressed: () => Scaffold.of(scaffoldCtx).openDrawer(),
-                  ),
-                ],
-              ),
-            ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: Card(
-                clipBehavior: Clip.none,
-                color: const Color(0xFFD3EAFF),
-                margin: const EdgeInsets.only(top: 100, left: 15, right: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          "ตรวจผลสลากกินแบ่ง",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2196F3),
-                          ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(10, 12, 10, 200),
+                color: brand,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(children: [
+                      Image.asset("assets/images/smalllogo.png",
+                          fit: BoxFit.cover, height: 40),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Lotto 888",
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          value: _selectedDraw,
-                          items: _drawItems,
-                          decoration: InputDecoration(
-                            labelText: "งวดวันที่ dd mmmm yyyy",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: const BorderSide(
-                                  color: Colors.grey, width: 2),
+                      ),
+                    ]),
+                    Builder(
+                      builder: (ctx) => IconButton(
+                        icon: const Icon(Icons.menu,
+                            size: 42, color: Colors.white),
+                        onPressed: () => Scaffold.of(ctx).openDrawer(),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, -180),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Card(
+                    color: const Color(0xFFD3EAFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 8,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            "ตรวจผลสลากกินแบ่ง",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2196F3),
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: const BorderSide(color: Colors.grey),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: const BorderSide(
-                                color: Color.fromARGB(255, 115, 122, 128),
-                                width: 2,
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: _selectedDraw,
+                            items: _drawItems,
+                            decoration: InputDecoration(
+                              labelText: "งวดวันที่ dd mmmm yyyy",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide:
+                                    const BorderSide(color: Colors.grey),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: const BorderSide(
+                                  color: Color.fromARGB(255, 115, 122, 128),
+                                  width: 2,
+                                ),
                               ),
                             ),
+                            onChanged: (v) => setState(() => _selectedDraw = v),
                           ),
-                          onChanged: (value) =>
-                              setState(() => _selectedDraw = value),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(6, (index) {
-                            return SizedBox(
-                              width: 40,
-                              child: TextField(
-                                onChanged: (val) {
-                                  if (val.isEmpty) return;
-                                  digits[index] = val[0];
-                                  if (index < 5) {
-                                    FocusScope.of(context).nextFocus();
-                                  } else {
-                                    FocusScope.of(context).unfocus();
-                                  }
-                                },
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontFamily: "Roboto",
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                                decoration: InputDecoration(
-                                  hintText: "9",
-                                  counterText: '',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(6, (index) {
+                              return SizedBox(
+                                width: 40,
+                                child: TextField(
+                                  onChanged: (val) {
+                                    if (val.isEmpty) return;
+                                    digits[index] = val[0];
+                                    if (index < 5) {
+                                      FocusScope.of(context).nextFocus();
+                                    } else {
+                                      FocusScope.of(context).unfocus();
+                                    }
+                                  },
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontFamily: "Roboto",
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    borderSide: const BorderSide(
-                                        color: Colors.grey, width: 2),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    borderSide: const BorderSide(
-                                      color: Color.fromARGB(255, 115, 122, 128),
-                                      width: 2,
+                                  textAlign: TextAlign.center,
+                                  decoration: InputDecoration(
+                                    hintText: "9",
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey.withOpacity(0.5),
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    counterText: '',
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: const BorderSide(
+                                          color: Colors.grey, width: 2),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: const BorderSide(
+                                          color: Color.fromARGB(
+                                              255, 115, 122, 128),
+                                          width: 2),
                                     ),
                                   ),
+                                  keyboardType: TextInputType.number,
                                 ),
-                                keyboardType: TextInputType.number,
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _checkLotto,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: brand,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 24),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
                               ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _checkLotto,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2196F3),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 24,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
+                            child: const Text(
+                              "ตรวจสลากกินแบ่ง",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                          child: const Text(
-                            "ตรวจสลากกินแบ่ง",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            
-          ],
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Transform.translate(
+                  offset: const Offset(0, -170),
+                  child: Image.asset(
+                    'assets/images/cardhome.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

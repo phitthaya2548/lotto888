@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:lotto/pages/welcome_page.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
 
 void main() async {
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Color(0xFF007BFF),
+    statusBarIconBrightness: Brightness.light,
+  ));
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
@@ -11,6 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

@@ -3,12 +3,38 @@ import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/pages/home_lotto.dart';
 import 'package:lotto/widgets/app_drawer.dart';
 import 'package:lotto/widgets/app_header.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfileLotto extends StatelessWidget {
+class ProfileLotto extends StatefulWidget {
   const ProfileLotto({super.key});
-  Future<void> _logout(BuildContext context) async {
-    await AuthService.clear();
 
+  @override
+  State<ProfileLotto> createState() => _ProfileLottoState();
+}
+
+class _ProfileLottoState extends State<ProfileLotto> {
+  String? _username;
+  int? _userId;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _username = prefs.getString('username');
+      _userId = prefs.getInt('user_id');
+      _loading = false;
+    });
+  }
+
+  Future<void> _logout() async {
+    await AuthService.clear();
+    if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LottoHome()),
@@ -18,6 +44,8 @@ class ProfileLotto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const brand = Color(0xFF007BFF);
+
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppHeader(),
@@ -26,13 +54,13 @@ class ProfileLotto extends StatelessWidget {
         child: Column(
           children: [
             SizedBox(
-              height: 280,
+              height: 250,
               child: Stack(
                 children: [
                   Container(
                     height: 280,
                     width: double.infinity,
-                    color: const Color(0xFF2196F3),
+                    color: brand,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 16),
                     child: SafeArea(
@@ -53,22 +81,13 @@ class ProfileLotto extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
+                                children: [
                                   Text(
-                                    "ชื่อ >",
-                                    style: TextStyle(
+                                    "ชื่อ ${_username ?? '-'}",
+                                    style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 16,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    "รหัสสมาชิก : L1234",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],
@@ -90,80 +109,44 @@ class ProfileLotto extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: const [
                           BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: Offset(0, 3),
-                          ),
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(0, 3)),
                         ],
                       ),
-                      child: Column(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Row(
-                            children: const [
-                              Icon(Icons.credit_card, size: 40),
-                              SizedBox(width: 10),
-                              Text(
-                                "เงินของฉัน\n0.00",
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset('assets/images/bitcoin.png',
+                                    width: 32, height: 32),
+                                const SizedBox(height: 4),
+                                const Text("0",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
+                                const Text("พอยต์"),
+                              ],
+                            ),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset('assets/images/bitcoin.png',
-                                        width: 32, height: 32),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      "0",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
-                                    ),
-                                    const Text("พอยต์"),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset('assets/images/tiket1.png',
-                                        width: 32, height: 32),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      "0",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
-                                    ),
-                                    const Text("สลากของฉัน"),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset('assets/images/copon.png',
-                                        width: 32, height: 32),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      "0",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
-                                    ),
-                                    const Text("คูปอง"),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset('assets/images/tiket1.png',
+                                    width: 32, height: 32),
+                                const SizedBox(height: 4),
+                                const Text("0",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
+                                const Text("สลากของฉัน"),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -171,64 +154,42 @@ class ProfileLotto extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('คูปองส่วนลด',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold))),
-                ),
-                Card(
-                  color: Colors.white,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Image.asset('assets/images/copon.png',
-                            width: 80, height: 80),
-                        const SizedBox(width: 12),
-                        const Text(
-                          "เก็บคูปอง",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black87,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: const Text("ใส่รหัสคูปอง"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
+
+            const Padding(
+              padding: EdgeInsets.all(12.0),
               child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('ข้อมูลมาชิก',
-                      style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold))),
+                alignment: Alignment.centerLeft,
+                child: Text('ข้อมูลมาชิก',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              ),
+            ),
+
+            // การ์ดเมนูต่าง ๆ
+            Card(
+              color: Colors.white,
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {},
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  child: Row(
+                    children: [
+                      Image.asset('assets/images/account_circle.png',
+                          fit: BoxFit.cover),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text("ข้อมูลส่วนตัว",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                      const Icon(Icons.chevron_right, color: Colors.black54),
+                    ],
+                  ),
+                ),
+              ),
             ),
             Card(
               color: Colors.white,
@@ -241,19 +202,12 @@ class ProfileLotto extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                   child: Row(
                     children: [
-                      Image.asset(
-                        'assets/images/account_circle.png',
-                        fit: BoxFit.cover,
-                      ),
+                      Image.asset('assets/images/Frame.png', fit: BoxFit.cover),
                       const SizedBox(width: 12),
                       const Expanded(
-                        child: Text(
-                          "ข้อมูลส่วนตัว",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: Text("ที่อยู่",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                       const Icon(Icons.chevron_right, color: Colors.black54),
                     ],
@@ -266,25 +220,18 @@ class ProfileLotto extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () {},
+                onTap: _logout,
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                   child: Row(
                     children: [
-                      Image.asset(
-                        'assets/images/Frame.png',
-                        fit: BoxFit.cover,
-                      ),
+                      Image.asset('assets/images/leave.png', fit: BoxFit.cover),
                       const SizedBox(width: 12),
                       const Expanded(
-                        child: Text(
-                          "ที่อยู่",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: Text("ออกจากระบบ",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                       const Icon(Icons.chevron_right, color: Colors.black54),
                     ],
@@ -292,39 +239,6 @@ class ProfileLotto extends StatelessWidget {
                 ),
               ),
             ),
-            Card(
-              color: Colors.white,
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  _logout(context);
-                },
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/images/leave.png',
-                        fit: BoxFit.cover,
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          "ออกจากระบบ",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right, color: Colors.black54),
-                    ],
-                  ),
-                ),
-              ),
-            )
           ],
         ),
       ),

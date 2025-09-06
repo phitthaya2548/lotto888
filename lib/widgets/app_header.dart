@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   const AppHeader({super.key});
-
   @override
   Size get preferredSize => const Size.fromHeight(56);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
+          
       toolbarHeight: 150,
       automaticallyImplyLeading: false,
-      backgroundColor: const Color(0xFF2196F3),
+      backgroundColor: Color(0xFF007BFF),
       title: Row(
         children: [
           Image.asset("assets/images/smalllogo.png",

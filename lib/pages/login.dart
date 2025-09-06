@@ -67,6 +67,8 @@ class _LoginPageState extends State<LoginPage> {
       if (resp.statusCode == 200) {
         final res = responseloginFromJson(resp.body);
         final prefs = await SharedPreferences.getInstance();
+        
+        Navigator.pop(context, res.user);
         log("role = ${res.user.role}");
         final role = (res.user.role ?? '').toString().toUpperCase();
         Widget nextPage;

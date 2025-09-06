@@ -60,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(Requestlogin(
           username: _username.text.trim(),
-          password: _passCtrl.text,
+          password: _passCtrl.text.trim(),
         ).toJson()),
       );
 

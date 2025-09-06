@@ -60,7 +60,7 @@ class User {
   String? fullName;
   String? phone;
   String role;
-  String status;
+
 
   User({
     required this.id,
@@ -69,7 +69,7 @@ class User {
     this.fullName,
     this.phone,
     required this.role,
-    required this.status,
+
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -79,6 +79,6 @@ class User {
         fullName: json["full_name"],
         phone: json["phone"],
         role: json["role"],
-        status: json["status"],
+
       );
 }

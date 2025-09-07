@@ -165,7 +165,6 @@ class _ProfileLottoState extends State<ProfileLotto> {
               ),
             ),
 
-            // การ์ดเมนูต่าง ๆ
             Card(
               color: Colors.white,
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -191,30 +190,7 @@ class _ProfileLottoState extends State<ProfileLotto> {
                 ),
               ),
             ),
-            Card(
-              color: Colors.white,
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {},
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                  child: Row(
-                    children: [
-                      Image.asset('assets/images/Frame.png', fit: BoxFit.cover),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text("ที่อยู่",
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                      ),
-                      const Icon(Icons.chevron_right, color: Colors.black54),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            
             Card(
               color: Colors.white,
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

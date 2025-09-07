@@ -1,29 +1,30 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lotto/models/response/res_login.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 class AuthService {
-  static const _kTokenKey = 'token';
-  static const _kUserIdKey = 'user_id';
-  static const _kUsernameKey = 'username';
-  static const _kRoleKey = 'role';
-  static const _kLoggedInKey = 'isLoggedIn';
-
+  static const _kToken = 'token';
+  static const _kUserId = 'user_id';
+  static const _kUsername = 'username';
+  static const _kRole = 'role';
+  static const _kLoggedIn = 'isLoggedIn';
+  static const _storage = FlutterSecureStorage();
   static Future<void> saveSession(Responselogin res) async {
-    final p = await SharedPreferences.getInstance();
-    await p.setString(_kTokenKey, res.token);
-    await p.setInt(_kUserIdKey, res.user.id);
-    await p.setString(_kUsernameKey, res.user.username);
-    await p.setString(_kRoleKey, res.user.role);
-    await p.setBool(_kLoggedInKey, true);
+    await _storage.write(key: _kToken, value: res.token);
+    await _storage.write(key: _kUserId, value: res.user.id.toString());
+    await _storage.write(key: _kUsername, value: res.user.username);
+    await _storage.write(key: _kRole, value: res.user.role);
+    await _storage.write(key: _kLoggedIn, value: 'true');
   }
-
   static Future<void> clear() async {
-    final p = await SharedPreferences.getInstance();
-    await p.clear();
+    await _storage.deleteAll();
   }
 
   static Future<bool> isLoggedIn() async {
-    final p = await SharedPreferences.getInstance();
-    return p.getBool(_kLoggedInKey) ?? false;
+    return (await _storage.read(key: _kLoggedIn)) == 'true';
+  }
+  static Future<String?> getToken() async {
+    return await _storage.read(key: _kToken);
+  }
+  static Future<String?> getRole() async {
+    return await _storage.read(key: _kRole);
   }
 }

@@ -38,6 +38,8 @@ dependencies:
   google_sign_in: ^7.1.1
   shared_preferences: ^2.3.2
   flutter_secure_storage: ^9.2.4
+  get: ^4.7.2
+  google_fonts: ^6.3.0
 # ไม่ต้องใส่ dependency_overrides แล้ว ปล่อยให้มันจัดการเวอร์ชันเอง
 
 dev_dependencies:

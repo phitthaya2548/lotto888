@@ -67,9 +67,8 @@ class _LoginPageState extends State<LoginPage> {
       if (resp.statusCode == 200) {
         final res = responseloginFromJson(resp.body);
         final prefs = await SharedPreferences.getInstance();
-        
-        Navigator.pop(context, res.user);
-        log("role = ${res.user.role}");
+
+        log(res.toJson().toString());
         final role = (res.user.role ?? '').toString().toUpperCase();
         Widget nextPage;
         switch (role) {
@@ -126,14 +125,15 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: Image.asset(
-                        'assets/images/Logo.png',
-                        fit: BoxFit.contain,
-                      )),
+ Align(
+  alignment: Alignment.topCenter,
+  child: Image.asset(
+    'assets/images/Logo.png',
+
+    fit: BoxFit.cover,
+  ),
+),
+
                   const SizedBox(height: 0),
                   Card(
                     elevation: 10,
@@ -289,78 +289,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Text("Forgot password?",
                                   style: TextStyle(color: brand)),
                             ),
-                            const SizedBox(height: 0),
-                            Row(
-                              children: const [
-                                Expanded(
-                                  child: Divider(
-                                    thickness: 2,
-                                    color: Color(0xFF0593FF),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 60,
-                                  ),
-                                  child: Text(
-                                    "",
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    thickness: 2,
-                                    color: Color(0xFF0593FF),
-                                  ),
-                                ),
-                              ],
-                            ),
                             const SizedBox(height: 10),
-                            SizedBox(
-                              height: 50,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Positioned(
-                                    left: 130,
-                                    top: -40,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(24),
-                                      onTap: () => ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                                Text("Google Sign-In (demo)")),
-                                      ),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(50),
-                                          border: Border.all(
-                                            color: const Color.fromARGB(
-                                                255, 228, 241, 253),
-                                            width: 2,
-                                          ),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                                color: Colors.black12,
-                                                blurRadius: 6,
-                                                offset: Offset(0, 2)),
-                                          ],
-                                        ),
-                                        child: Image.asset(
-                                          'assets/images/google.png',
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                             TextButton(
                               onPressed: () {
                                 Navigator.push(

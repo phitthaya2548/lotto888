@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:lotto/pages/check_lotto.dart';
 import 'package:lotto/pages/member/wallet_lotto.dart';
 import 'package:lotto/pages/welcome_page.dart';
@@ -22,55 +24,84 @@ class _MemberShellState extends State<MemberShell> {
   final Set<int> _protectedTabs = {2, 3, 4};
   late final _tabRoots = <Widget>[
     const LottoHome(),
-    const BuyTicket(),
     const CheckLotto(),
+    const BuyTicket(),
     const WalletLotto(),
     const ProfileLotto(),
   ];
-  Future<bool?> _askLogin(BuildContext ctx) {
-    return showDialog<bool>(
-      context: ctx,
-      builder: (_) => AlertDialog(
-        title: const Text('ยังไม่ได้เข้าสู่ระบบ'),
-        content: const Text('คุณต้องล็อกอินก่อนเพื่อเข้าใช้งานเมนูนี้'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('ยกเลิก'),
+ void _askLogin() {
+  Get.defaultDialog(
+    title: 'ยังไม่ได้เข้าสู่ระบบ',
+    middleText: 'คุณต้องล็อกอินก่อนเพื่อเข้าใช้งานเมนูนี้',
+    barrierDismissible: false,
+    titleStyle: const TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+      color: Color(0xFF007BFF),
+    ),
+    middleTextStyle: const TextStyle(
+      fontSize: 18,
+      color: Colors.black87,
+    ),
+    backgroundColor: Colors.white,
+    radius: 12,
+    actions: [
+      OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFF007BFF)),
+          foregroundColor: const Color(0xFF007BFF),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('ไปหน้า Login'),
-          ),
-        ],
+        ),
+        onPressed: () {
+          Get.back();
+        },
+        child: const Text('ยกเลิก'),
       ),
-    );
+      ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF007BFF),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        onPressed: () {
+          Get.back();
+          Get.to(const WelcomePage());
+        },
+        child: const Text(
+          'ไปหน้า Login',
+          style: TextStyle(fontSize: 16),
+        ),
+      ),
+    ],
+  );
+}
+
+
+ Future<void> _onSelectTab(int i) async {
+  if (_index == i) {
+    final nav = _navKeys[i].currentState;
+    if (nav != null) {
+      while (nav.canPop()) nav.pop();
+    }
+    return;
   }
 
-  Future<void> _onSelectTab(int i) async {
-    if (_index == i) {
-      final nav = _navKeys[i].currentState!;
-      while (nav.canPop()) nav.pop();
+  if (_protectedTabs.contains(i)) {
+    final ok = await AuthService.isLoggedIn();
+    if (!ok) {
+      _askLogin();
       return;
     }
-    if (_protectedTabs.contains(i)) {
-      final ok = await AuthService.isLoggedIn();
-      if (!ok) {
-        final goLogin = await _askLogin(context);
-        if (goLogin == true) {
-          final loggedIn = await Navigator.of(context).push<bool>(
-            MaterialPageRoute(builder: (_) => const WelcomePage()),
-          );
-          if (loggedIn == true) {
-            setState(() => _index = i);
-          }
-        }
-        return;
-      }
-    }
-
-    setState(() => _index = i);
   }
+
+  if (!mounted) return;
+  setState(() => _index = i);
+}
 
   Widget _buildTabNavigator(int i) {
     return Navigator(
@@ -115,7 +146,7 @@ class _MemberShellState extends State<MemberShell> {
                   labelTextStyle: MaterialStateProperty.resolveWith((states) {
                     final selected = states.contains(MaterialState.selected);
                     return TextStyle(
-                      fontSize: selected ? 16 : 14,
+                      fontSize: selected ? 15 : 14,
                       fontWeight: FontWeight.bold,
                       color: selected ? Color(0xFF007BFF) : Colors.grey,
                     );
@@ -162,7 +193,7 @@ class _MemberShellState extends State<MemberShell> {
                         colorFilter: const ColorFilter.mode(
                             Color(0xFF007BFF), BlendMode.srcIn),
                       ),
-                      label: 'ซื้อเลข',
+                      label: 'ตรวจลอตโต้',
                     ),
                     NavigationDestination(
                       icon: Image.asset(

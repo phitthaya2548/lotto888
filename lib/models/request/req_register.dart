@@ -1,8 +1,6 @@
 import 'dart:convert';
 
-/// =======================
-/// ใช้ตอนส่งข้อมูลไปสมัคร
-/// =======================
+
 class RegisterRequest {
   String username;
   String email;
@@ -27,10 +25,6 @@ class RegisterRequest {
 String registerRequestToJson(RegisterRequest data) =>
     json.encode(data.toJson());
 
-
-/// =======================
-/// ใช้ตอนรับ response กลับ
-/// =======================
 RegisterResponse registerResponseFromJson(String str) =>
     RegisterResponse.fromJson(json.decode(str));
 

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/get_core.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 import 'package:lotto/pages/admin/home_addmin.dart';
 import 'package:lotto/pages/admin/prize_darw_admin.dart';
-import 'package:lotto/pages/admin/prize_darwresult_admin.dart';
 import 'package:lotto/pages/admin/reset_admin.dart';
+import 'package:lotto/pages/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// TODO: ถ้าใช้ MemberShell ให้ import ให้ถูก หรือเปลี่ยนปลายทางเป็นหน้า Login
-// import 'package:lotto/widgets/bottom_nav.dart'; // ตัวอย่างที่คุณใส่ไว้เดิม
+import '../../welcome_page.dart';
 
 class AdminNav extends StatefulWidget {
   const AdminNav({super.key});
@@ -18,26 +19,20 @@ class AdminNav extends StatefulWidget {
 class _AdminNavState extends State<AdminNav> {
   int _index = 0;
 
-  // ต้องตรงกับจำนวนแท็บ
-  final _navKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
+  final _navKeys = List.generate(3, (_) => GlobalKey<NavigatorState>());
 
-  final _appBarTitles = const ['หน้าหลัก', 'ออกรางวัล', 'ผลรางวัล', 'รีเซ็ท'];
-
-  // root ของแต่ละแท็บ
   Widget _rootForTab(int i) {
     switch (i) {
       case 0:
-        return HomeAdmin();
+        return const HomeAdmin();
       case 1:
-        return PrizeDarwAdmin();
+        return const PrizeDarwAdmin();
       case 2:
-        return PrizeDarwResultAdmin();
       default:
-        return ResetAdmin();
+        return const ResetAdmin();
     }
   }
 
-  // Navigator แยกต่อแท็บ
   Widget _buildTabNavigator(int tabIndex) {
     return Navigator(
       key: _navKeys[tabIndex],
@@ -48,7 +43,6 @@ class _AdminNavState extends State<AdminNav> {
     );
   }
 
-  // Back: pop ในแท็บก่อน
   Future<bool> _onWillPop() async {
     final nav = _navKeys[_index].currentState;
     if (nav != null && nav.canPop()) {
@@ -59,13 +53,10 @@ class _AdminNavState extends State<AdminNav> {
   }
 
   Future<void> _logout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    if (!mounted) return;
+  await AuthService.clear();
 
-    Navigator.of(context).pop();
-  }
-
+  Get.offAll(() => const WelcomePage());
+}
   @override
   Widget build(BuildContext context) {
     final items = <BottomNavigationBarItem>[
@@ -80,12 +71,6 @@ class _AdminNavState extends State<AdminNav> {
         label: 'ออกรางวัล',
       ),
       const BottomNavigationBarItem(
-        icon: ImageIcon(AssetImage('assets/images/resultprize.png'), size: 24),
-        activeIcon:
-            ImageIcon(AssetImage('assets/images/resultprize.png'), size: 28),
-        label: 'ผลรางวัล',
-      ),
-      const BottomNavigationBarItem(
         icon: ImageIcon(AssetImage('assets/images/reset1.png'), size: 24),
         activeIcon: ImageIcon(AssetImage('assets/images/reset1.png'), size: 28),
         label: 'รีเซ็ท',
@@ -95,28 +80,16 @@ class _AdminNavState extends State<AdminNav> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          elevation: 6,
-          shadowColor: Colors.black26,
-          surfaceTintColor: Colors.transparent,
-          title: Text(_appBarTitles[_index]),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Logout',
-              onPressed: () => _logout(context),
-            ),
-          ],
-        ),
+        // ❌ ไม่มี appBar แล้ว
         body: IndexedStack(
           index: _index,
           children: List.generate(
-              4,
-              (i) => Offstage(
-                    offstage: _index != i,
-                    child: _buildTabNavigator(i),
-                  )),
+            items.length,
+            (i) => Offstage(
+              offstage: _index != i,
+              child: _buildTabNavigator(i),
+            ),
+          ),
         ),
         bottomNavigationBar: SafeArea(
           child: Container(
@@ -140,12 +113,12 @@ class _AdminNavState extends State<AdminNav> {
                 topRight: Radius.circular(24),
               ),
               child: SizedBox(
-                height: 72, // ← ปรับความสูงที่นี่
+                height: 72,
                 child: BottomNavigationBar(
                   currentIndex: _index,
                   type: BottomNavigationBarType.fixed,
                   backgroundColor: Colors.white,
-                  selectedItemColor: const Color(0xFF0593FF), // สีตอนกด
+                  selectedItemColor: const Color(0xFF0593FF),
                   unselectedItemColor: Colors.grey,
                   showUnselectedLabels: true,
                   items: items,

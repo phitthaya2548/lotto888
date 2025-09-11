@@ -194,7 +194,7 @@ class _RegisterPageState extends State<Register> {
                             ),
                             const SizedBox(height: 12),
 
-                            // Confirm Password  ✅ ใช้ _confirm (ไม่ใช่ _password ซ้ำ)
+                        
                             TextFormField(
                               controller: _confirm,
                               textInputAction: TextInputAction.done,

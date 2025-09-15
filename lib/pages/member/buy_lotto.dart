@@ -39,7 +39,7 @@ class _BuyTicketState extends State<BuyTicket> {
                 alignment: Alignment.topRight,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       colors: [Color(0xFF007BFF), Color(0xFF6EC9FF)],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,

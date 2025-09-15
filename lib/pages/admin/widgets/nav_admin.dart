@@ -80,7 +80,7 @@ class _AdminNavState extends State<AdminNav> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        // ❌ ไม่มี appBar แล้ว
+
         body: IndexedStack(
           index: _index,
           children: List.generate(

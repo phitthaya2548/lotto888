@@ -42,7 +42,6 @@ class _LottoHomeState extends State<LottoHome> {
   Widget build(BuildContext context) {
     const brand = Color(0xFF007BFF);
 
-
     return Scaffold(
       backgroundColor: const Color(0xFFEAF2FF),
       drawer: const AppDrawer(),

@@ -8,7 +8,6 @@ import 'package:lotto/pages/admin/widgets/nav_admin.dart';
 import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../config/config.dart';
 import '../models/request/req_login.dart';
 import '../models/response/res_login.dart';
@@ -16,7 +15,6 @@ import 'register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -67,7 +65,6 @@ class _LoginPageState extends State<LoginPage> {
       if (resp.statusCode == 200) {
         final res = responseloginFromJson(resp.body);
         final prefs = await SharedPreferences.getInstance();
-
         log(res.toJson().toString());
         final role = (res.user.role ?? '').toString().toUpperCase();
         Widget nextPage;
@@ -125,15 +122,13 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
- Align(
-  alignment: Alignment.topCenter,
-  child: Image.asset(
-    'assets/images/Logo.png',
-
-    fit: BoxFit.cover,
-  ),
-),
-
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Image.asset(
+                      'assets/images/Logo.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                   const SizedBox(height: 0),
                   Card(
                     elevation: 10,

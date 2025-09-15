@@ -12,7 +12,7 @@ class ResetAdmin extends StatefulWidget {
 class _ResetAdminState extends State<ResetAdmin> {
   bool _busy = false;
 
-  // เรียกเมื่อกดปุ่มส้ม
+
   void _showConfirmReset() {
     Get.defaultDialog(
       title: "รีเซ็ทระบบ",
@@ -47,7 +47,6 @@ class _ResetAdminState extends State<ResetAdmin> {
         ],
       ),
       actions: [
-        // ยกเลิก
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey.shade300,
@@ -56,14 +55,13 @@ class _ResetAdminState extends State<ResetAdmin> {
           onPressed: () => Get.back(),
           child: const Text("ยกเลิก", style: TextStyle(color: Colors.black)),
         ),
-        // ยืนยัน
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: _busy ? null : () async {
-            Get.back(); // ปิด dialog ก่อน
+            Get.back();
             await _performReset();
           },
           child: const Text("ยืนยัน", style: TextStyle(color: Colors.white)),
@@ -72,13 +70,11 @@ class _ResetAdminState extends State<ResetAdmin> {
     );
   }
 
-  // ตรงนี้ไว้เชื่อม API รีเซ็ตจริง ๆ
   Future<void> _performReset() async {
     setState(() => _busy = true);
 
     try {
-      // TODO: call API ลบข้อมูล / รีเซ็ตระบบที่นี่
-      // ตัวอย่างจำลองดีเลย์
+
       await Future.delayed(const Duration(seconds: 1));
 
       if (!mounted) return;

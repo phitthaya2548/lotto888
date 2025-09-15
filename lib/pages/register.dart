@@ -19,7 +19,6 @@ class _RegisterPageState extends State<Register> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
-
   bool _showPass = false;
   bool _submitting = false;
   String? url;

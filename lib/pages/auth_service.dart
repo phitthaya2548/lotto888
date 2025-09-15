@@ -3,7 +3,7 @@ import 'package:lotto/models/response/res_login.dart';
 class AuthService {
   static const _kToken = 'token';
   static const _kUserId = 'user_id';
-  static const _kUsername = 'username';
+  static const _kUsername = 'session';
   static const _kRole = 'role';
   static const _kLoggedIn = 'isLoggedIn';
   static const _storage = FlutterSecureStorage();
@@ -16,6 +16,9 @@ class AuthService {
   }
   static Future<void> clear() async {
     await _storage.deleteAll();
+  }
+  static Future<String?> getUsername() async{
+    return await _storage.read(key: _kUsername);
   }
 
   static Future<bool> isLoggedIn() async {

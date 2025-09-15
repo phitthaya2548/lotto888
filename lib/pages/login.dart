@@ -26,12 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _showPass = false;
   bool _busy = false;
   String url = '';
-  @override
-  void dispose() {
-    _username.dispose();
-    _passCtrl.dispose();
-    super.dispose();
-  }
+
 
   @override
   void initState() {

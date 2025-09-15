@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
@@ -252,42 +254,88 @@ class _MyTicketState extends State<MyTicket> {
     );
   }
 
-  void showBuyDialog() {
-    Get.defaultDialog(
-      title: "",
-      titlePadding: EdgeInsets.zero,
-      contentPadding: const EdgeInsets.all(16),
-      radius: 12,
-      barrierDismissible: false, // ป้องกันการกดข้างนอกแล้วปิดเอง
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+  void showBuyDialog({Duration autoClose = const Duration(seconds: 10)}) {
+    Get.dialog(
+      Stack(
         children: [
-          const Text(
-            "ยินดีด้วย คุณถูกรางวัล XX",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            textAlign: TextAlign.center,
+          Positioned.fill(
+            child: BackdropFilter(
+              filter:
+                  ImageFilter.blur(sigmaX: 12, sigmaY: 12), // ปรับความแรงได้
+              child: Container(color: Colors.black.withOpacity(0.2)),
+            ),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            "คุณ XXXXXXXX คุณเป็นเศรษฐีแล้ว",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
+          Center(
+            child: Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "ยินดีด้วย คุณถูกรางวัล XX",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "คุณ XXXXXXXX คุณเป็นเศรษฐีแล้ว",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "เป็นเงินรางวัล 600,000,000 บาท",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: autoClose,
+                      builder: (context, value, _) => ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: value,
+                          minHeight: 6,
+                          backgroundColor: Colors.grey.shade300, // สีพื้นหลัง
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.green), // สี progress
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text(
+                        "ปิด",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color.fromARGB(255, 255, 0, 0)),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            "เป็นเงินรางวัล 600,000,000 บาท",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
         ],
       ),
+      barrierDismissible: false, // กันเผลอกดนอกกรอบแล้วปิด
+      barrierColor:
+          Colors.transparent, // ต้องโปร่งใสเพื่อให้ BackdropFilter ทำงาน
     );
 
-    Future.delayed(const Duration(seconds: 3), () {
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
+    Future.delayed(autoClose, () {
+      if (Get.isDialogOpen ?? false) Get.back();
     });
   }
 }

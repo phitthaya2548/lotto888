@@ -4,15 +4,15 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
-<<<<<<< HEAD
+
 import 'package:http/http.dart' as http;
 import 'package:lotto/config/config.dart';
 import 'package:lotto/models/request/req_butlotto.dart';
 import 'package:lotto/models/response/res_lotto.dart';
 import 'package:lotto/pages/auth_service.dart';
-=======
+
 import 'package:lotto/pages/member/my_lotto.dart';
->>>>>>> Add_mylotto
+
 import 'package:lotto/widgets/app_drawer.dart';
 import 'package:lotto/widgets/app_header.dart';
 
@@ -63,6 +63,7 @@ class _BuyTicketState extends State<BuyTicket> {
 
     _searchCtrl.addListener(() => setState(() {}));
   }
+
 
   @override
   void dispose() {
@@ -350,320 +351,322 @@ class _BuyTicketState extends State<BuyTicket> {
       appBar: const AppHeader(),
       backgroundColor: const Color(0xFFEAF2FF),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // แถบยอดเงิน (ยังเป็น mock)
-            Padding(
-              padding: const EdgeInsets.only(top: 10, right: 10),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF007BFF), Color(0xFF6EC9FF)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // แถบยอดเงิน (ยังเป็น mock)
+              Padding(
+                padding: const EdgeInsets.only(top: 10, right: 10),
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF007BFF), Color(0xFF6EC9FF)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
                     ),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/wallet1.png',
-                        color: Colors.white,
-                        width: 28,
-                        height: 28,
-                      ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        "1000฿",
-                        style: TextStyle(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/wallet1.png',
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                          width: 28,
+                          height: 28,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        const Text(
+                          "1000฿",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-
-            // ปุ่ม "สลากของฉัน"
-            Padding(
-              padding: const EdgeInsets.fromLTRB(15, 12, 15, 15),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 80,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: brand, width: 2),
-                          backgroundColor: Colors.white,
-                          foregroundColor: brand,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        icon: Image.asset(
-                          'assets/images/list.png',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.contain,
-                        ),
-                        label: const Text(
-                          'สลากของฉัน',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: brand,
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const MyTicket(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ช่องกรอก "เลข 6 หลัก" + ปุ่มแว่น
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Lotto',
-                    style: TextStyle(
-                      color: brand,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _searchCtrl,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    onSubmitted: (_) => _checkNumber(),
-                    decoration: InputDecoration(
-                      counterText: "",
-                      hintText: 'กรอกเลข 6 หลัก เช่น 123456',
-                      hintStyle: TextStyle(color: Colors.grey.shade400),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(14)),
-                        borderSide: BorderSide(color: brand, width: 1.5),
-                      ),
-                      suffixIcon: Container(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.search,
-                                  color: Colors.black45, size: 28),
-                              onPressed: _checkNumber,
-                            ),
-                            if (_searchCtrl.text.isNotEmpty)
-                              IconButton(
-                                icon: const Icon(Icons.clear,
-                                    color: Colors.black45, size: 22),
-                                onPressed: () {
-                                  _searchCtrl.clear();
-                                },
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // รายการสลาก (ตัวอย่างจาก viewTickets)
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: viewTickets.length,
-                itemBuilder: (_, i) {
-                  final t = viewTickets[i];
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFADDCFF),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'สลากลอตโต้ 888',
-                                  style: TextStyle(
-                                    color: Colors.black54,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Text(
-                                    (t['number'] ?? '') as String,
-                                    style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 2,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'งวดที่ $_currentDrawId',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.black.withOpacity(.6),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      (t['date'] ?? '') as String,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.black.withOpacity(.6),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+          
+              // ปุ่ม "สลากของฉัน"
+              Padding(
+                padding: const EdgeInsets.fromLTRB(15, 12, 15, 15),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 80,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: brand, width: 2),
+                            backgroundColor: Colors.white,
+                            foregroundColor: brand,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 85,
-                            decoration: BoxDecoration(
+                          icon: Image.asset(
+                            'assets/images/list.png',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.contain,
+                          ),
+                          label: const Text(
+                            'สลากของฉัน',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
                               color: brand,
-                              borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 10.0),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MyTicket(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          
+              // ช่องกรอก "เลข 6 หลัก" + ปุ่มแว่น
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Lotto',
+                      style: TextStyle(
+                        color: brand,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _searchCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      onSubmitted: (_) => _checkNumber(),
+                      decoration: InputDecoration(
+                        counterText: "",
+                        hintText: 'กรอกเลข 6 หลัก เช่น 123456',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(14)),
+                          borderSide: BorderSide(color: brand, width: 1.5),
+                        ),
+                        suffixIcon: Container(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.search,
+                                    color: Colors.black45, size: 28),
+                                onPressed: _checkNumber,
+                              ),
+                              if (_searchCtrl.text.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.clear,
+                                      color: Colors.black45, size: 22),
+                                  onPressed: () {
+                                    _searchCtrl.clear();
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          
+              const SizedBox(height: 12),
+          
+              // รายการสลาก (ตัวอย่างจาก viewTickets)
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: viewTickets.length,
+                  itemBuilder: (_, i) {
+                    final t = viewTickets[i];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFADDCFF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
                               child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Image.asset(
-                                    'assets/images/logo1.png',
-                                    color: Colors.white,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    '${t['price'] ?? 0} บาท',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
+                                  const Text(
+                                    'สลากลอตโต้ 888',
+                                    style: TextStyle(
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 20,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  InkWell(
-                                    onTap: () {
-<<<<<<< HEAD
-                                      final six = _toSixDigits(
-                                        (t['number'] as String?) ?? '',
-                                      );
-                                      if (!RegExp(r'^\d{6}$').hasMatch(six)) {
-                                        Get.snackbar(
-                                          "เลขไม่ถูกต้อง",
-                                          "ต้องเป็นเลข 6 หลัก",
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: Colors.red.shade600,
-                                          colorText: Colors.white,
-                                        );
-                                        return;
-                                      }
-                                      _confirmBuy(
-                                          six, (t['price'] as int?) ?? 100);
-=======
-                                      showBuyDialog();
->>>>>>> Add_mylotto
-                                    },
-                                    borderRadius: BorderRadius.circular(40),
-                                    child: const CircleAvatar(
-                                      radius: 28,
-                                      backgroundColor: Colors.white,
-                                      child: Image(
-                                        image: AssetImage(
-                                            'assets/images/basket.png'),
-                                        width: 28,
-                                        height: 28,
-                                        fit: BoxFit.contain,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Text(
+                                      (t['number'] ?? '') as String,
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2,
+                                        color: Colors.black,
                                       ),
                                     ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'งวดที่ $_currentDrawId',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.black.withOpacity(.6),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        (t['date'] ?? '') as String,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.black.withOpacity(.6),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
-                          )
-                        ],
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 85,
+                              decoration: BoxDecoration(
+                                color: brand,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10.0),
+                                child: Column(
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/logo1.png',
+                                      color: Colors.white,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${t['price'] ?? 0} บาท',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    InkWell(
+                                      onTap: () {
+          
+                                        final six = _toSixDigits(
+                                          (t['number'] as String?) ?? '',
+                                        );
+                                        if (!RegExp(r'^\d{6}$').hasMatch(six)) {
+                                          Get.snackbar(
+                                            "เลขไม่ถูกต้อง",
+                                            "ต้องเป็นเลข 6 หลัก",
+                                            snackPosition: SnackPosition.BOTTOM,
+                                            backgroundColor: Colors.red.shade600,
+                                            colorText: Colors.white,
+                                          );
+                                          return;
+                                        }
+                                        _confirmBuy(
+                                            six, (t['price'] as int?) ?? 100);
+          
+                                     
+          
+                                      },
+                                      borderRadius: BorderRadius.circular(40),
+                                      child: const CircleAvatar(
+                                        radius: 28,
+                                        backgroundColor: Colors.white,
+                                        child: Image(
+                                          image: AssetImage(
+                                              'assets/images/basket.png'),
+                                          width: 28,
+                                          height: 28,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-<<<<<<< HEAD
-=======
+
 
   void showBuyDialog() {
     Get.defaultDialog(
@@ -759,5 +762,18 @@ class _BuyTicketState extends State<BuyTicket> {
       ),
     );
   }
->>>>>>> Add_mylotto
+
+
+  Future<void> _onRefresh() async {
+
+  await _fetchLatest();
+
+  if (mounted) {
+    setState(() {
+      _searchCtrl.clear();
+      viewTickets = List<Map<String, dynamic>>.from(_mockTickets);
+    });
+  }
+}
+
 }

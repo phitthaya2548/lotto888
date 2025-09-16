@@ -22,104 +22,36 @@ class _MyTicketState extends State<MyTicket> {
   static const brand = Color(0xFF007BFF);
 
   String url = '';
-  String? _userId;
   String? _username;
+  String? _userId; // ที่มาจาก Auth (string)
+  int? _userIdInt; // ✅ ใช้งานจริงกับ API
 
   String? _selectedDraw; // value: yyyy-MM-dd#drawNumber
   List<DropdownMenuItem<String>> _drawItems = const [];
   List<Draw> _draws = [];
 
-  /// โครงสร้างแต่ละแถว:
+  /// tickets item:
   /// {
-  ///   'number': '9 9 9 9 9 9',    // โชว์สวย ๆ
-  ///   'raw': '999999',            // ตัวเลขล้วน ใช้จับคู่กับ API /prize-check
+  ///   'number': '9 9 9 9 9 9',
+  ///   'raw': '999999',
   ///   'date': '1 กันยายน 2568',
   ///   'draw': 123,
-  ///   'status': 'PENDING'|'WIN'|'LOSE',
-  ///   'statusLabel': 'ยังไม่ประกาศ' | 'ถูกรางวัล ...' | 'ไม่ถูกรางวัล',
+  ///   'claimed': bool,
+  ///   'status': 'PENDING'|'WIN'|'LOSE'|'CLAIMED',
+  ///   'statusLabel': 'ยังไม่ประกาศ'|'ถูกรางวัล ...'|'ไม่ถูกรางวัล'|'รับเงินแล้ว',
   ///   'prizeCode': 'PRIZE1'|'PRIZE2'|'PRIZE3'|'LAST3'|'LAST2'|null,
-  ///   'prizeAmount': 0 or >0
+  ///   'prizeAmount': double,
   /// }
   final List<Map<String, dynamic>> tickets = [];
 
   bool _loadingDraws = false;
   bool _loadingTickets = false;
 
+  // ---------- utils ----------
   String _dateStr(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
   String _drawValue(Draw d) => '${_dateStr(d.drawDate)}#${d.drawNumber}';
 
-  @override
-  void initState() {
-    super.initState();
-
-    Configuration.getConfig().then((c) async {
-      final raw = (c['apiEndpoint'] ?? '').toString().trim();
-      final normalized = raw.replaceAll(RegExp(r'/+$'), '');
-      if (!mounted) return;
-      setState(() => url = normalized);
-
-      await _fetchDrawList();
-      if (mounted && _selectedDraw != null) {
-        await _fetchBuyerTicketsForSelectedDraw(); // จะเรียก /prize-check ต่อข้างใน
-      }
-    });
-
-    _loadUser();
-  }
-
-  Future<void> _loadUser() async {
-    final sessionUserId = await AuthService.getId();
-    final sessionUsername = await AuthService.getUsername();
-    if (!mounted) return;
-    setState(() {
-      _userId = sessionUserId;
-      _username = sessionUsername;
-    });
-    if (_selectedDraw != null && _selectedDraw!.isNotEmpty) {
-      await _fetchBuyerTicketsForSelectedDraw();
-    }
-  }
-
-  Future<void> _fetchDrawList() async {
-    if (url.isEmpty) return;
-    setState(() => _loadingDraws = true);
-    try {
-      final res = await http.get(Uri.parse('$url/draws/list'));
-      if (res.statusCode == 200) {
-        final data = responseRandomLessonFromJson(res.body);
-
-        final items = data.draws.map((d) {
-          final date = _dateStr(d.drawDate);
-          final value = _drawValue(d);
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text('งวดที่ ${d.drawNumber} ($date)'),
-          );
-        }).toList();
-
-        if (!mounted) return;
-        setState(() {
-          _draws = data.draws;
-          _drawItems = items;
-          _selectedDraw = items.isNotEmpty ? items.first.value : null;
-        });
-
-        for (final d in data.draws) {
-          log("draw list -> รอบ ${d.drawNumber}, วันที่ ${_dateStr(d.drawDate)}");
-        }
-      } else {
-        log('fetchDrawList failed: ${res.statusCode} ${res.body}');
-      }
-    } catch (e) {
-      log('fetchDrawList error: $e');
-    } finally {
-      if (mounted) setState(() => _loadingDraws = false);
-    }
-  }
-
-  // ---------- helpers ----------
   String _formatTicketNumber(String n) {
     final digits = n.replaceAll(RegExp(r'\D'), '');
     return digits.split('').join(' ');
@@ -177,10 +109,102 @@ class _MyTicketState extends State<MyTicket> {
     }
   }
 
-  // ---------- API flows ----------
+  String _formatBaht(double amt) {
+    final s = amt.toStringAsFixed(2);
+    final parts = s.split('.');
+    final intPart = parts[0];
+    final decPart = parts[1];
+    final buf = StringBuffer();
+    for (int i = 0; i < intPart.length; i++) {
+      final idxFromRight = intPart.length - i;
+      buf.write(intPart[i]);
+      if (idxFromRight > 1 && idxFromRight % 3 == 1) buf.write(',');
+    }
+    return '${buf.toString()}.$decPart บาท';
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  // ---------- lifecycle ----------
+  @override
+  void initState() {
+    super.initState();
+
+    // 1) โหลด config → list draws → ถ้ามี default selected ให้ลองโหลด
+    Configuration.getConfig().then((c) async {
+      final raw = (c['apiEndpoint'] ?? '').toString().trim();
+      final normalized = raw.replaceAll(RegExp(r'/+$'), '');
+      if (!mounted) return;
+      setState(() => url = normalized);
+
+      await _fetchDrawList();
+      if (mounted && _selectedDraw != null) {
+        await _fetchBuyerTicketsForSelectedDraw(); // จะตามด้วย prize-check
+      }
+    });
+
+    // 2) โหลด user → แปลง int → ถ้ามีงวดแล้ว โหลดตั๋ว (กัน race)
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final session = await AuthService.getId();
+    final session2 = await AuthService.getUsername();
+    if (!mounted) return;
+    setState(() {
+      _userId = session;
+      _username = session2;
+      _userIdInt = int.tryParse(session ?? '');
+    });
+    if (_selectedDraw?.isNotEmpty == true && _userIdInt != null) {
+      await _fetchBuyerTicketsForSelectedDraw();
+    }
+  }
+
+  // ---------- API: draw list ----------
+  Future<void> _fetchDrawList() async {
+    if (url.isEmpty) return;
+    setState(() => _loadingDraws = true);
+    try {
+      final res = await http.get(Uri.parse('$url/draws/list'));
+      if (res.statusCode == 200) {
+        final data = responseRandomLessonFromJson(res.body);
+
+        final items = data.draws.map((d) {
+          final date = _dateStr(d.drawDate);
+          final value = _drawValue(d);
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text('งวดที่ ${d.drawNumber} ($date)'),
+          );
+        }).toList();
+
+        if (!mounted) return;
+        setState(() {
+          _draws = data.draws;
+          _drawItems = items;
+          _selectedDraw = items.isNotEmpty ? items.first.value : null;
+        });
+
+        for (final d in data.draws) {
+          log("draw list -> รอบ ${d.drawNumber}, วันที่ ${_dateStr(d.drawDate)}");
+        }
+      } else {
+        log('fetchDrawList failed: ${res.statusCode} ${res.body}');
+      }
+    } catch (e) {
+      log('fetchDrawList error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingDraws = false);
+    }
+  }
+
+  // ---------- API: tickets + prize-check ----------
   Future<void> _fetchBuyerTicketsForSelectedDraw() async {
     if (url.isEmpty) return;
-    if (_userId == null || _userId!.isEmpty) return;
+    if (_userIdInt == null) return; // ✅ ต้องเป็น int
     if (_selectedDraw == null || _selectedDraw!.isEmpty) return;
 
     setState(() => _loadingTickets = true);
@@ -189,10 +213,10 @@ class _MyTicketState extends State<MyTicket> {
       final drawDate = parsed.drawDate;
       final drawNumber = parsed.drawNumber;
 
-      // 1) ดึงรายการตั๋วของผู้ใช้ในงวดนี้
-      final uriList = Uri.parse('$url/tickets').replace(
+      // 1) list tickets ของผู้ใช้
+      final uriList = Uri.parse('$url/tickets/by-buyer-and-draw').replace(
         queryParameters: {
-          'buyer_user_id': _userId!,
+          'buyer_user_id': _userIdInt!.toString(),
           'draw_number': drawNumber.toString(),
         },
       );
@@ -214,15 +238,18 @@ class _MyTicketState extends State<MyTicket> {
 
       final newTickets = list.map<Map<String, dynamic>>((e) {
         final raw = (e['ticket_number'] ?? '').toString();
+        final statusDb = (e['status'] ?? '').toString();
+        final claimed = statusDb == 'REDEEMED';
         return {
           'number': _formatTicketNumber(raw),
           'raw': raw,
           'date': dateText,
           'draw': drawNumber,
-          'status': 'PENDING',
-          'statusLabel': 'ยังไม่ประกาศ',
+          'claimed': claimed,
+          'status': claimed ? 'CLAIMED' : 'PENDING',
+          'statusLabel': claimed ? 'รับเงินแล้ว' : 'ยังไม่ประกาศ',
           'prizeCode': null,
-          'prizeAmount': 0,
+          'prizeAmount': 0.0,
         };
       }).toList();
 
@@ -233,7 +260,7 @@ class _MyTicketState extends State<MyTicket> {
           ..addAll(newTickets);
       });
 
-      // 2) ตรวจรางวัลสำหรับผู้ใช้ในงวดนี้
+      // 2) ตรวจรางวัล (งวดยังไม่ปิด → 409 → คง PENDING)
       await _checkPrizesForSelectedDraw(drawNumber);
     } catch (e) {
       log('fetchBuyerTickets error: $e');
@@ -244,11 +271,11 @@ class _MyTicketState extends State<MyTicket> {
 
   Future<void> _checkPrizesForSelectedDraw(int drawNumber) async {
     if (url.isEmpty) return;
-    if (_userId == null || _userId!.isEmpty) return;
+    if (_userIdInt == null) return;
 
     final uri = Uri.parse('$url/draws/prize-check').replace(
       queryParameters: {
-        'buyer_user_id': _userId!,
+        'buyer_user_id': _userIdInt!.toString(),
         'draw_number': drawNumber.toString(),
       },
     );
@@ -256,12 +283,10 @@ class _MyTicketState extends State<MyTicket> {
     try {
       final res = await http.get(uri);
 
-      // กรณีงวดยังไม่ปิดประกาศผล (409) -> ปล่อยให้เป็น PENDING
       if (res.statusCode == 409) {
-        log('prize-check: งวยังไม่ปิด');
+        log('prize-check: งวดยังไม่ปิดประกาศผล');
         return;
       }
-
       if (res.statusCode != 200) {
         log('prize-check failed: ${res.statusCode} ${res.body}');
         return;
@@ -274,31 +299,33 @@ class _MyTicketState extends State<MyTicket> {
       }
 
       final List<dynamic> results = (body['results'] as List<dynamic>? ?? []);
-
-      // ทำ map จาก ticketNumber -> result
       final Map<String, dynamic> hitByRaw = {
         for (final r in results) (r['ticketNumber'] ?? '').toString(): r,
       };
 
       if (!mounted) return;
-
       setState(() {
         for (var i = 0; i < tickets.length; i++) {
+          if (tickets[i]['claimed'] == true) {
+            tickets[i]['status'] = 'CLAIMED';
+            tickets[i]['statusLabel'] = 'รับเงินแล้ว';
+            continue;
+          }
           final raw = (tickets[i]['raw'] ?? '').toString();
           final r = hitByRaw[raw];
 
           if (r == null) {
-            // ถ้าไม่มีในผลลัพธ์ ปล่อย PENDING (หรือจะเซ็ต LOSE ก็ได้ ถ้าบริการการันตีว่าควรต้องมีทุกรายการ)
             tickets[i]['status'] = 'PENDING';
             tickets[i]['statusLabel'] = 'ยังไม่ประกาศ';
             tickets[i]['prizeCode'] = null;
-            tickets[i]['prizeAmount'] = 0;
+            tickets[i]['prizeAmount'] = 0.0;
             continue;
           }
 
-          final amount = (r['awardedAmount'] ?? 0) is num
-              ? (r['awardedAmount'] as num).toDouble()
-              : double.tryParse(r['awardedAmount']?.toString() ?? '0') ?? 0.0;
+          final amountNum = (r['awardedAmount'] ?? 0);
+          final amount = amountNum is num
+              ? amountNum.toDouble()
+              : double.tryParse(amountNum.toString()) ?? 0.0;
           final best = (r['bestPrize'] ?? '') as String?;
 
           if (amount > 0 && best != null && best.isNotEmpty) {
@@ -311,7 +338,7 @@ class _MyTicketState extends State<MyTicket> {
             tickets[i]['status'] = 'LOSE';
             tickets[i]['statusLabel'] = 'ไม่ถูกรางวัล';
             tickets[i]['prizeCode'] = null;
-            tickets[i]['prizeAmount'] = 0;
+            tickets[i]['prizeAmount'] = 0.0;
           }
         }
       });
@@ -320,20 +347,91 @@ class _MyTicketState extends State<MyTicket> {
     }
   }
 
-  // String _formatBaht(double amt) {
-  //   // รูปแบบง่าย ๆ เช่น 1000000 -> 1,000,000.00 บาท
-  //   final s = amt.toStringAsFixed(2);
-  //   final parts = s.split('.');
-  //   final intPart = parts[0];
-  //   final decPart = parts[1];
-  //   final buf = StringBuffer();
-  //   for (int i = 0; i < intPart.length; i++) {
-  //     final idxFromRight = intPart.length - i;
-  //     buf.write(intPart[i]);
-  //     if (idxFromRight > 1 && idxFromRight % 3 == 1) buf.write(',');
-  //   }
-  //   return '${buf.toString()}.$decPart บาท';
-  // }
+  // ---------- API: claim ----------
+  Future<void> _claimTicket(int index) async {
+    final t = tickets[index];
+    final isWinner = t['status'] == 'WIN';
+    final isClaimed = t['claimed'] == true;
+    if (!isWinner || isClaimed) return;
+    if (_userIdInt == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ไม่พบรหัสผู้ใช้ (user id)')),
+      );
+      return;
+    }
+
+    try {
+      final uri = Uri.parse('$url/draws/claim');
+      final payload = {
+        // ส่งทั้งสองแบบกัน validation ฝั่ง server
+        'buyerUserId': _userIdInt,
+        'buyer_user_id': _userIdInt,
+        'drawNumber': t['draw'],
+        'draw_number': t['draw'],
+        'ticketNumber': t['raw'],
+        'ticket_number': t['raw'],
+      };
+
+      final res = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        body: jsonEncode(payload),
+      );
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final prizeCode = body['prize']?.toString();
+        final amountAny = body['awardedAmount'];
+        final amount = amountAny is num
+            ? amountAny.toDouble()
+            : double.tryParse(amountAny?.toString() ?? '0') ?? 0.0;
+        final prizeLabel = _prizeLabel(prizeCode);
+        final amountText = _formatBaht(amount);
+
+        setState(() {
+          tickets[index]['claimed'] = true;
+          tickets[index]['status'] = 'CLAIMED';
+          tickets[index]['statusLabel'] = 'รับเงินแล้ว';
+        });
+
+        // ✅ เปิด dialog “เฉพาะตอนกดขึ้นเงิน และสำเร็จ”
+        showBuyDialog(
+          username: _username, // หรือชื่อผู้ใช้จริงถ้ามี
+          prizeLabel: prizeLabel.isEmpty ? 'รางวัล' : prizeLabel,
+          amountText: amountText,
+          autoClose: const Duration(seconds: 8),
+        );
+        return;
+      }
+
+      // แสดงสาเหตุอื่น ๆ
+      String msg;
+      try {
+        final m = jsonDecode(res.body);
+        msg = m['message']?.toString() ?? res.body;
+
+        // ถ้า server บอกว่าเคลมไปแล้ว → sync เป็น CLAIMED แต่ “ไม่” เปิด dialog
+        final code = (m['code'] ?? '').toString();
+        if (res.statusCode == 409 &&
+            (code == 'ALREADY_REDEEMED' || code == 'DUPLICATE_PRIZE_TX')) {
+          setState(() {
+            tickets[index]['claimed'] = true;
+            tickets[index]['status'] = 'CLAIMED';
+            tickets[index]['statusLabel'] = 'รับเงินแล้ว';
+          });
+        }
+      } catch (_) {
+        msg = res.body;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('รับเงินไม่สำเร็จ (${res.statusCode}): $msg')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+      );
+    }
+  }
 
   // ---------- UI ----------
   @override
@@ -376,13 +474,13 @@ class _MyTicketState extends State<MyTicket> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: Colors.grey),
+                  enabledBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(30)),
+                    borderSide: BorderSide(color: Colors.grey),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(
+                  focusedBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(30)),
+                    borderSide: BorderSide(
                       color: Color.fromARGB(255, 115, 122, 128),
                       width: 2,
                     ),
@@ -414,12 +512,19 @@ class _MyTicketState extends State<MyTicket> {
                       itemCount: tickets.length,
                       itemBuilder: (_, i) {
                         final t = tickets[i];
-                        final isPending = t['status'] == 'PENDING';
                         final isWinner = t['status'] == 'WIN';
+                        final isClaimed = t['status'] == 'CLAIMED';
 
-                        // ปุ่ม: เขียวเมื่อถูกรางวัล, เทาเมื่อไม่ใช่ผู้ชนะหรือยังไม่ประกาศ
-                        final Color btnColor =
-                            isWinner ? const Color(0xFF34C759) : Colors.grey;
+                        // สีปุ่ม: ชนะและยังไม่เคลม = เขียวเข้ม, เคลมแล้ว = เขียวอ่อน, อื่น ๆ = เทา
+                        final Color btnColor = isClaimed
+                            ? const Color(0xFFA5E8B1) // เขียวอ่อน
+                            : (isWinner
+                                ? const Color(0xFF34C759)
+                                : Colors.grey);
+
+                        final bool btnEnabled = isWinner && !isClaimed;
+                        final String btnText =
+                            isClaimed ? 'รับเงินแล้ว' : 'ขึ้นเงิน';
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -546,7 +651,6 @@ class _MyTicketState extends State<MyTicket> {
                                     padding:
                                         const EdgeInsets.fromLTRB(18, 0, 0, 0),
                                     child: Text(
-                                      // แสดงสถานะตามจริง
                                       (t['statusLabel'] ?? 'ยังไม่ประกาศ')
                                           .toString(),
                                       style: const TextStyle(
@@ -557,16 +661,15 @@ class _MyTicketState extends State<MyTicket> {
                                     ),
                                   ),
                                   ElevatedButton(
-                                    onPressed: isWinner
-                                        ? () {
-                                            // TODO: เปิด flow ขึ้นเงิน
-                                            showBuyDialog(_username);
-                                          }
-                                        : null, // disabled เมื่อไม่ชนะ/ยังไม่ประกาศ
+                                    onPressed: btnEnabled
+                                        ? () => _claimTicket(i)
+                                        : null,
                                     style: ElevatedButton.styleFrom(
                                       elevation: 0,
                                       backgroundColor: btnColor,
-                                      disabledBackgroundColor: Colors.grey,
+                                      disabledBackgroundColor: isClaimed
+                                          ? const Color(0xFFA5E8B1)
+                                          : Colors.grey,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -575,9 +678,9 @@ class _MyTicketState extends State<MyTicket> {
                                         vertical: 5,
                                       ),
                                     ),
-                                    child: const Text(
-                                      'ขึ้นเงิน',
-                                      style: TextStyle(
+                                    child: Text(
+                                      btnText,
+                                      style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
                                         color: Colors.black,
@@ -599,14 +702,18 @@ class _MyTicketState extends State<MyTicket> {
   }
 }
 
-void showBuyDialog(String? username,
-    {Duration autoClose = const Duration(seconds: 10)}) {
+void showBuyDialog({
+  String? username,
+  required String prizeLabel,
+  required String amountText,
+  Duration autoClose = const Duration(seconds: 10),
+}) {
   Get.dialog(
     Stack(
       children: [
         Positioned.fill(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12), // ปรับความแรงได้
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
             child: Container(color: Colors.black.withOpacity(0.2)),
           ),
         ),
@@ -620,9 +727,10 @@ void showBuyDialog(String? username,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    "ยินดีด้วย คุณถูกรางวัล XX",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  Text(
+                    "ยินดีด้วย คุณถูกรางวัล $prizeLabel",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
@@ -633,9 +741,10 @@ void showBuyDialog(String? username,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    "เป็นเงินรางวัล 600,000,000 บาท",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Text(
+                    "เป็นเงินรางวัล $amountText",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -647,9 +756,9 @@ void showBuyDialog(String? username,
                       child: LinearProgressIndicator(
                         value: value,
                         minHeight: 6,
-                        backgroundColor: Colors.grey.shade300, // สีพื้นหลัง
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.green), // สี progress
+                        backgroundColor: Colors.grey.shade300,
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(Colors.green),
                       ),
                     ),
                   ),
@@ -659,9 +768,10 @@ void showBuyDialog(String? username,
                     child: const Text(
                       "ปิด",
                       style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Color.fromARGB(255, 255, 0, 0)),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Color.fromARGB(255, 255, 0, 0),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -672,9 +782,8 @@ void showBuyDialog(String? username,
         ),
       ],
     ),
-    barrierDismissible: false, // กันเผลอกดนอกกรอบแล้วปิด
-    barrierColor:
-        Colors.transparent, // ต้องโปร่งใสเพื่อให้ BackdropFilter ทำงาน
+    barrierDismissible: false,
+    barrierColor: Colors.transparent,
   );
 
   Future.delayed(autoClose, () {

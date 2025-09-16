@@ -27,17 +27,38 @@ class _LoginPageState extends State<LoginPage> {
   bool _busy = false;
   String url = '';
 
-
   @override
   void initState() {
     super.initState();
-    Configuration.getConfig().then(
-      (config) {
-        url = config['apiEndpoint'];
-      },
-    );
+    Configuration.getConfig().then((config) {
+      url = (config['apiEndpoint'] ?? '').toString();
+    });
   }
 
+  // ---- เพิ่ม helper สำหรับยิง HTTP + log ผล ----
+  Future<http.Response> _post(
+    Uri uri, {
+    Map<String, String>? headers,
+    Object? body,
+  }) async {
+    debugPrint('[HTTP] POST $uri');
+    if (headers != null) debugPrint('[HTTP] headers: $headers');
+    if (body != null) debugPrint('[HTTP] body(out): $body');
+    try {
+      final resp = await http.post(uri, headers: headers, body: body);
+      final ct = (resp.headers['content-type'] ?? '').toLowerCase();
+      final head =
+          resp.body.length > 300 ? resp.body.substring(0, 300) : resp.body;
+      debugPrint('[HTTP] <- ${resp.statusCode} ct=$ct');
+      debugPrint('[HTTP] body(head): $head');
+      return resp;
+    } catch (e, st) {
+      debugPrint('[HTTP] EXCEPTION: $e\n$st');
+      rethrow;
+    }
+  }
+
+// ---- แทนที่ฟังก์ชัน login() เดิม ----
   Future<void> login() async {
     if (url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -48,19 +69,30 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _busy = true);
     try {
-      final resp = await http.post(
-        Uri.parse('$url/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(Requestlogin(
-          username: _username.text.trim(),
-          password: _passCtrl.text.trim(),
-        ).toJson()),
+      // ทำให้ base url สะอาด (ตัด / ท้ายๆ ออก)
+      final base = url.replaceAll(RegExp(r'/+$'), '');
+
+      final resp = await _post(
+        Uri.parse('$base/login'),
+        headers: const {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'username': _username.text.trim(),
+          'password': _passCtrl.text,
+        }),
       );
 
-      if (resp.statusCode == 200) {
+      final ct = (resp.headers['content-type'] ?? '').toLowerCase();
+      final isJson = ct.contains('application/json');
+
+      if (resp.statusCode == 200 && isJson) {
         final res = responseloginFromJson(resp.body);
-        final prefs = await SharedPreferences.getInstance();
-        log(res.toJson().toString());
+
+        // บันทึก session ก่อน แล้วค่อยนำทาง
+        await AuthService.saveSession(res);
+
         final role = (res.user.role ?? '').toString().toUpperCase();
         Widget nextPage;
         switch (role) {
@@ -68,31 +100,33 @@ class _LoginPageState extends State<LoginPage> {
             nextPage = const AdminNav();
             break;
           case 'MEMBER':
-            nextPage = const MemberShell();
-            break;
           default:
             nextPage = const MemberShell();
         }
 
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => nextPage),
         );
-        await AuthService.saveSession(res);
       } else {
-        final msg = (jsonDecode(resp.body)['message'] ??
-                'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})')
-            .toString();
+        // ถ้าไม่ใช่ JSON อย่าพยายาม jsonDecode — แสดงแค่ status
+        final msg = isJson
+            ? (jsonDecode(resp.body)['message'] ??
+                    'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})')
+                .toString()
+            : 'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})';
+        if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ผิดพลาด: $e')),
-      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('ผิดพลาด: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-
-    setState(() => _busy = false);
   }
 
   @override

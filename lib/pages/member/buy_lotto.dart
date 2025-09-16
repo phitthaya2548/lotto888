@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -16,6 +18,9 @@ import 'package:lotto/pages/member/my_lotto.dart';
 import 'package:lotto/widgets/app_drawer.dart';
 import 'package:lotto/widgets/app_header.dart';
 
+import 'dart:developer' as dev;
+import 'dart:math' as math;
+
 class BuyTicket extends StatefulWidget {
   const BuyTicket({Key? key}) : super(key: key);
 
@@ -26,12 +31,7 @@ class BuyTicket extends StatefulWidget {
 class _BuyTicketState extends State<BuyTicket> {
   static const brand = Color(0xFF007BFF);
 
-  // mock เริ่มต้น (ถ้า server ว่าง)
-  final List<Map<String, dynamic>> _mockTickets = const [
-    {"number": "9 9 9 9 9 9", "date": "1 กันยายน 2568", "price": 100},
-    {"number": "9 9 9 9 9 8", "date": "1 กันยายน 2568", "price": 100},
-    {"number": "9 9 9 9 9 7", "date": "1 กันยายน 2568", "price": 100},
-  ];
+  List<Map<String, dynamic>> _mockTickets = [];
 
   String url = '';
   final _searchCtrl = TextEditingController();
@@ -42,6 +42,25 @@ class _BuyTicketState extends State<BuyTicket> {
   List<Map<String, dynamic>> allTickets = [];
   List<Map<String, dynamic>> viewTickets = [];
 
+  String _random6(Random r) => List.generate(6, (_) => r.nextInt(10)).join();
+
+  List<Map<String, dynamic>> _genMockTickets(int count) {
+    final r = math.Random();
+    final seen = <String>{};
+    final out = <Map<String, dynamic>>[];
+    while (out.length < count) {
+      final raw = _random6(r); // 6 หลักติดกัน เช่น "123456"
+      if (seen.add(raw)) {
+        out.add({
+          'number': _format6(raw), // แปลงเป็น "1 2 3 4 5 6"
+          'date': 'งวดปัจจุบัน',
+          'price': 100,
+        });
+      }
+    }
+    return out;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -50,20 +69,23 @@ class _BuyTicketState extends State<BuyTicket> {
       final config = await Configuration.getConfig();
       final id = await AuthService.getId();
 
+      final mock = _genMockTickets(100); // ✅ สุ่ม 100 ใบ
+
       setState(() {
         url = (config['apiEndpoint'] ?? '')
             .toString()
             .replaceAll(RegExp(r'/+$'), '');
-        allTickets = List<Map<String, dynamic>>.from(_mockTickets);
-        viewTickets = List<Map<String, dynamic>>.from(_mockTickets);
+        _mockTickets = mock;
+        allTickets = List<Map<String, dynamic>>.from(mock);
+        viewTickets = List<Map<String, dynamic>>.from(mock);
         _userId = id != null ? int.tryParse(id) : null;
       });
+
       await _fetchLatest();
     }();
 
     _searchCtrl.addListener(() => setState(() {}));
   }
-
 
   @override
   void dispose() {
@@ -78,15 +100,15 @@ class _BuyTicketState extends State<BuyTicket> {
       final res = await http.get(Uri.parse('$url/draws'));
       if (res.statusCode == 200) {
         final data = responseRandomLottoFromJson(res.body);
-        log(data.draw.id.toString());
+        dev.log(data.draw.id.toString());
         setState(() {
-          _currentDrawId = data.draw.id+1;
+          _currentDrawId = data.draw.id + 1;
         });
       } else if (res.statusCode != 404) {
-        log('fetch test dreaw ${res.statusCode} ${res.body}');
+        dev.log('fetch test draw ${res.statusCode} ${res.body}');
       }
     } catch (e) {
-      log('fetch latest exception: $e');
+      dev.log('fetch latest exception: $e');
     }
   }
 
@@ -343,6 +365,51 @@ class _BuyTicketState extends State<BuyTicket> {
       ),
     );
   }
+  Future<bool> _ensureBuyable(String number6) async {
+  try {
+    final uri = Uri.parse('$url/tickets/check').replace(queryParameters: {
+      'drawId': _currentDrawId.toString(),
+      'number': number6,
+    });
+
+    final resp = await http
+        .get(uri, headers: {'Accept': 'application/json'})
+        .timeout(const Duration(seconds: 8));
+
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      final canBuy = data['canBuy'] == true;
+      if (!canBuy) {
+        // mark ให้ปุ่มซีด/ห้ามกด
+        setState(() {
+          viewTickets = viewTickets.map((m) {
+            final sixM = _toSixDigits((m['number'] as String?) ?? '');
+            return (sixM == number6) ? {...m, 'soldOut': true} : m;
+          }).toList();
+        });
+        Get.snackbar("ซื้อไม่ได้", "เลข ${_format6(number6)} ถูกซื้อแล้ว",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.shade700, colorText: Colors.white);
+      }
+      return canBuy;
+    } else {
+      Get.snackbar("ผิดพลาด", "เช็คสิทธิ์ซื้อไม่สำเร็จ (${resp.statusCode})",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade600, colorText: Colors.white);
+      return false;
+    }
+  } on TimeoutException {
+    Get.snackbar("ช้าเกินไป", "การเชื่อมต่อหมดเวลา ลองใหม่อีกครั้ง",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.shade600, colorText: Colors.white);
+    return false;
+  } catch (e) {
+    Get.snackbar("เครือข่ายผิดพลาด", e.toString(),
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.shade600, colorText: Colors.white);
+    return false;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -395,7 +462,7 @@ class _BuyTicketState extends State<BuyTicket> {
                   ),
                 ),
               ),
-          
+
               // ปุ่ม "สลากของฉัน"
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 12, 15, 15),
@@ -441,7 +508,7 @@ class _BuyTicketState extends State<BuyTicket> {
                   ],
                 ),
               ),
-          
+
               // ช่องกรอก "เลข 6 หลัก" + ปุ่มแว่น
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -511,16 +578,20 @@ class _BuyTicketState extends State<BuyTicket> {
                   ],
                 ),
               ),
-          
+
               const SizedBox(height: 12),
-          
+
               // รายการสลาก (ตัวอย่างจาก viewTickets)
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   itemCount: viewTickets.length,
                   itemBuilder: (_, i) {
-                    final t = viewTickets[i];
+                    final Map<String, dynamic> t =
+                        viewTickets[i]; // 1) ประกาศ t ก่อน
+                    final String six = _toSixDigits(
+                        (t['number'] as String?) ?? ''); // 2) แล้วค่อยใช้ t
+                    final bool isSold = (t['soldOut'] == true);
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
@@ -614,38 +685,58 @@ class _BuyTicketState extends State<BuyTicket> {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    InkWell(
-                                      onTap: () {
-          
-                                        final six = _toSixDigits(
-                                          (t['number'] as String?) ?? '',
-                                        );
-                                        if (!RegExp(r'^\d{6}$').hasMatch(six)) {
-                                          Get.snackbar(
-                                            "เลขไม่ถูกต้อง",
-                                            "ต้องเป็นเลข 6 หลัก",
-                                            snackPosition: SnackPosition.BOTTOM,
-                                            backgroundColor: Colors.red.shade600,
-                                            colorText: Colors.white,
-                                          );
-                                          return;
-                                        }
-                                        _confirmBuy(
-                                            six, (t['price'] as int?) ?? 100);
-          
-                                     
-          
-                                      },
-                                      borderRadius: BorderRadius.circular(40),
-                                      child: const CircleAvatar(
-                                        radius: 28,
-                                        backgroundColor: Colors.white,
-                                        child: Image(
-                                          image: AssetImage(
-                                              'assets/images/basket.png'),
-                                          width: 28,
-                                          height: 28,
-                                          fit: BoxFit.contain,
+
+                                    // ✅ ซีด/ปิดการกด เมื่อเลขถูกซื้อแล้ว
+                                    Opacity(
+                                      opacity: isSold ? 0.4 : 1,
+                                      child: IgnorePointer(
+                                        ignoring: isSold,
+                                        child: InkWell(
+                                          onTap: () async { 
+                                            if (_currentDrawId <= 0) {
+                                              Get.snackbar("ยังไม่พร้อม",
+                                                  "กำลังโหลดงวดล่าสุด กรุณาลองใหม่อีกครั้ง",
+                                                  snackPosition:
+                                                      SnackPosition.BOTTOM,
+                                                  backgroundColor:
+                                                      Colors.orange.shade700,
+                                                  colorText: Colors.white);
+                                              return;
+                                            }
+                                            final six = _toSixDigits(
+                                                (t['number'] as String?) ?? '');
+                                            if (!RegExp(r'^\d{6}$')
+                                                .hasMatch(six)) {
+                                              Get.snackbar(
+                                                "เลขไม่ถูกต้อง",
+                                                "ต้องเป็นเลข 6 หลัก",
+                                                snackPosition:
+                                                    SnackPosition.BOTTOM,
+                                                backgroundColor:
+                                                    Colors.red.shade600,
+                                                colorText: Colors.white,
+                                              );
+                                              return;
+                                            }
+                                              final canBuy = await _ensureBuyable(six);
+  if (!canBuy) return;
+                                            _confirmBuy(six,
+                                                (t['price'] as int?) ?? 100);
+                                          },
+
+                                          borderRadius:
+                                              BorderRadius.circular(40),
+                                          child: const CircleAvatar(
+                                            radius: 28,
+                                            backgroundColor: Colors.white,
+                                            child: Image(
+                                              image: AssetImage(
+                                                  'assets/images/basket.png'),
+                                              width: 28,
+                                              height: 28,
+                                              fit: BoxFit.contain,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -667,113 +758,16 @@ class _BuyTicketState extends State<BuyTicket> {
     );
   }
 
-
-  void showBuyDialog() {
-    Get.defaultDialog(
-      title: "",
-      titlePadding: EdgeInsets.zero,
-      contentPadding: const EdgeInsets.all(16),
-      radius: 12,
-      content: Column(
-        children: [
-          const Text(
-            "ต้องการซื้อสลากลอตเตอรี่ 888",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "เลข 999999",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            "ราคา 100 บาท",
-            style: TextStyle(fontSize: 14),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                  Get.snackbar(
-                    "สำเร็จ",
-                    "คุณยืนยันการซื้อเรียบร้อยแล้ว",
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.green.shade600,
-                    colorText: Colors.white,
-                    borderRadius: 12,
-                    margin: const EdgeInsets.all(12),
-                    duration: const Duration(seconds: 2),
-                    icon: const Icon(Icons.check_circle, color: Colors.white),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  "ยืนยัน",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                  Get.snackbar(
-                    "ยกเลิก",
-                    "คุณได้ยกเลิกรายการนี้",
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.red.shade600,
-                    colorText: Colors.white,
-                    borderRadius: 12,
-                    margin: const EdgeInsets.all(12),
-                    duration: const Duration(seconds: 2),
-                    icon: const Icon(Icons.cancel, color: Colors.white),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  "ยกเลิก",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-
   Future<void> _onRefresh() async {
+    await _fetchLatest();
 
-  await _fetchLatest();
-
-  if (mounted) {
-    setState(() {
-      _searchCtrl.clear();
-      viewTickets = List<Map<String, dynamic>>.from(_mockTickets);
-    });
+    if (mounted) {
+      setState(() {
+        _searchCtrl.clear();
+        viewTickets = List<Map<String, dynamic>>.from(_mockTickets);
+      });
+    }
   }
 }
 
-}
+

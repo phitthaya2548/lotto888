@@ -8,7 +8,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-          
       toolbarHeight: 150,
       automaticallyImplyLeading: false,
       backgroundColor: Color(0xFF007BFF),

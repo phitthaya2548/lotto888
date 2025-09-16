@@ -4,11 +4,15 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
+<<<<<<< HEAD
 import 'package:http/http.dart' as http;
 import 'package:lotto/config/config.dart';
 import 'package:lotto/models/request/req_butlotto.dart';
 import 'package:lotto/models/response/res_lotto.dart';
 import 'package:lotto/pages/auth_service.dart';
+=======
+import 'package:lotto/pages/member/my_lotto.dart';
+>>>>>>> Add_mylotto
 import 'package:lotto/widgets/app_drawer.dart';
 import 'package:lotto/widgets/app_header.dart';
 
@@ -420,7 +424,14 @@ class _BuyTicketState extends State<BuyTicket> {
                             color: brand,
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyTicket(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -602,6 +613,7 @@ class _BuyTicketState extends State<BuyTicket> {
                                   const SizedBox(height: 8),
                                   InkWell(
                                     onTap: () {
+<<<<<<< HEAD
                                       final six = _toSixDigits(
                                         (t['number'] as String?) ?? '',
                                       );
@@ -617,6 +629,9 @@ class _BuyTicketState extends State<BuyTicket> {
                                       }
                                       _confirmBuy(
                                           six, (t['price'] as int?) ?? 100);
+=======
+                                      showBuyDialog();
+>>>>>>> Add_mylotto
                                     },
                                     borderRadius: BorderRadius.circular(40),
                                     child: const CircleAvatar(
@@ -647,4 +662,102 @@ class _BuyTicketState extends State<BuyTicket> {
       ),
     );
   }
+<<<<<<< HEAD
+=======
+
+  void showBuyDialog() {
+    Get.defaultDialog(
+      title: "",
+      titlePadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.all(16),
+      radius: 12,
+      content: Column(
+        children: [
+          const Text(
+            "ต้องการซื้อสลากลอตเตอรี่ 888",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "เลข 999999",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            "ราคา 100 บาท",
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.snackbar(
+                    "สำเร็จ",
+                    "คุณยืนยันการซื้อเรียบร้อยแล้ว",
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.green.shade600,
+                    colorText: Colors.white,
+                    borderRadius: 12,
+                    margin: const EdgeInsets.all(12),
+                    duration: const Duration(seconds: 2),
+                    icon: const Icon(Icons.check_circle, color: Colors.white),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "ยืนยัน",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.snackbar(
+                    "ยกเลิก",
+                    "คุณได้ยกเลิกรายการนี้",
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red.shade600,
+                    colorText: Colors.white,
+                    borderRadius: 12,
+                    margin: const EdgeInsets.all(12),
+                    duration: const Duration(seconds: 2),
+                    icon: const Icon(Icons.cancel, color: Colors.white),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "ยกเลิก",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+>>>>>>> Add_mylotto
 }

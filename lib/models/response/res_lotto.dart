@@ -1,144 +1,149 @@
-// res_lotto.dart
+// To parse this JSON data, do
+//
+//     final responseRandomLotto = responseRandomLottoFromJson(jsonString);
+
 import 'dart:convert';
 
-ResponseRandomLotto responseRandomLottoFromJson(String str) =>
-    ResponseRandomLotto.fromJson(json.decode(str) as Map<String, dynamic>);
+ResponseRandomLotto responseRandomLottoFromJson(String str) => ResponseRandomLotto.fromJson(json.decode(str));
 
-String responseRandomLottoToJson(ResponseRandomLotto data) =>
-    json.encode(data.toJson());
+String responseRandomLottoToJson(ResponseRandomLotto data) => json.encode(data.toJson());
 
-// ===== helpers: parse ปลอดภัย =====
-int _toInt(Object? v, {int def = 0}) {
-  if (v == null) return def;
-  if (v is int) return v;
-  if (v is double) return v.toInt();
-  if (v is String) return int.tryParse(v) ?? def;
-  return def;
-}
-
-String _toStr(Object? v, {String def = ''}) => v?.toString() ?? def;
-
-DateTime _toDate(Object? v) =>
-    DateTime.tryParse(_toStr(v)) ?? DateTime.fromMillisecondsSinceEpoch(0);
-
-// ===== models =====
 class ResponseRandomLotto {
-  final bool success;
-  final DrawPayload draw;
+    bool success;
+    Draw draw;
 
-  ResponseRandomLotto({
-    required this.success,
-    required this.draw,
-  });
+    ResponseRandomLotto({
+        required this.success,
+        required this.draw,
+    });
 
-  factory ResponseRandomLotto.fromJson(Map<String, dynamic> json) {
-    return ResponseRandomLotto(
-      success: json['success'] == true,
-      draw: DrawPayload.fromJson(
-        (json['draw'] as Map?)?.cast<String, dynamic>() ?? const {},
-      ),
+    factory ResponseRandomLotto.fromJson(Map<String, dynamic> json) => ResponseRandomLotto(
+        success: json["success"],
+        draw: Draw.fromJson(json["draw"]),
     );
-  }
 
-  Map<String, dynamic> toJson() => {
-        'success': success,
-        'draw': draw.toJson(),
-      };
+    Map<String, dynamic> toJson() => {
+        "success": success,
+        "draw": draw.toJson(),
+    };
 }
 
-class DrawPayload {
-  final int drawNumber;
-  final DateTime drawDate;
-  final Results results;
-  final Amounts amounts;
+class Draw {
+    int id;
+    int drawNumber;
+    DateTime drawDate;
+    String status;
+    Results results;
+    Amounts amounts;
+    Meta meta;
 
-  DrawPayload({
-    required this.drawNumber,
-    required this.drawDate,
-    required this.results,
-    required this.amounts,
-  });
+    Draw({
+        required this.id,
+        required this.drawNumber,
+        required this.drawDate,
+        required this.status,
+        required this.results,
+        required this.amounts,
+        required this.meta,
+    });
 
-  factory DrawPayload.fromJson(Map<String, dynamic> json) => DrawPayload(
-        drawNumber: _toInt(json['drawNumber']),
-        drawDate: _toDate(json['drawDate']),
-        results: Results.fromJson(
-          (json['results'] as Map?)?.cast<String, dynamic>() ?? const {},
-        ),
-        amounts: Amounts.fromJson(
-          (json['amounts'] as Map?)?.cast<String, dynamic>() ?? const {},
-        ),
-      );
+    factory Draw.fromJson(Map<String, dynamic> json) => Draw(
+        id: json["id"],
+        drawNumber: json["drawNumber"],
+        drawDate: DateTime.parse(json["drawDate"]),
+        status: json["status"],
+        results: Results.fromJson(json["results"]),
+        amounts: Amounts.fromJson(json["amounts"]),
+        meta: Meta.fromJson(json["meta"]),
+    );
 
-  Map<String, dynamic> toJson() => {
-        'drawNumber': drawNumber,
-        'drawDate':
-            '${drawDate.year.toString().padLeft(4, '0')}-${drawDate.month.toString().padLeft(2, '0')}-${drawDate.day.toString().padLeft(2, '0')}',
-        'results': results.toJson(),
-        'amounts': amounts.toJson(),
-      };
-}
-
-class Results {
-  final String first;
-  final String second;
-  final String third;
-  final String last3;
-  final String last2;
-
-  Results({
-    required this.first,
-    required this.second,
-    required this.third,
-    required this.last3,
-    required this.last2,
-  });
-
-  factory Results.fromJson(Map<String, dynamic> json) => Results(
-        first: _toStr(json['first']),
-        second: _toStr(json['second']),
-        third: _toStr(json['third']),
-        last3: _toStr(json['last3']),
-        last2: _toStr(json['last2']),
-      );
-
-  Map<String, dynamic> toJson() => {
-        'first': first,
-        'second': second,
-        'third': third,
-        'last3': last3,
-        'last2': last2,
-      };
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "drawNumber": drawNumber,
+        "drawDate": drawDate.toIso8601String(),
+        "status": status,
+        "results": results.toJson(),
+        "amounts": amounts.toJson(),
+        "meta": meta.toJson(),
+    };
 }
 
 class Amounts {
-  final int prize1Amount;
-  final int prize2Amount;
-  final int prize3Amount;
-  final int last3Amount;
-  final int last2Amount;
+    int prize1Amount;
+    int prize2Amount;
+    int prize3Amount;
+    int last3Amount;
+    int last2Amount;
 
-  Amounts({
-    required this.prize1Amount,
-    required this.prize2Amount,
-    required this.prize3Amount,
-    required this.last3Amount,
-    required this.last2Amount,
-  });
+    Amounts({
+        required this.prize1Amount,
+        required this.prize2Amount,
+        required this.prize3Amount,
+        required this.last3Amount,
+        required this.last2Amount,
+    });
 
-  factory Amounts.fromJson(Map<String, dynamic> json) => Amounts(
-        prize1Amount: _toInt(json['prize1Amount']),
-        prize2Amount: _toInt(json['prize2Amount']),
-        prize3Amount: _toInt(json['prize3Amount']),
-        last3Amount: _toInt(json['last3Amount']),
-        last2Amount: _toInt(json['last2Amount']),
-      );
+    factory Amounts.fromJson(Map<String, dynamic> json) => Amounts(
+        prize1Amount: json["prize1Amount"],
+        prize2Amount: json["prize2Amount"],
+        prize3Amount: json["prize3Amount"],
+        last3Amount: json["last3Amount"],
+        last2Amount: json["last2Amount"],
+    );
 
-  Map<String, dynamic> toJson() => {
-        'prize1Amount': prize1Amount,
-        'prize2Amount': prize2Amount,
-        'prize3Amount': prize3Amount,
-        'last3Amount': last3Amount,
-        'last2Amount': last2Amount,
-      };
+    Map<String, dynamic> toJson() => {
+        "prize1Amount": prize1Amount,
+        "prize2Amount": prize2Amount,
+        "prize3Amount": prize3Amount,
+        "last3Amount": last3Amount,
+        "last2Amount": last2Amount,
+    };
+}
+
+class Meta {
+    String sourceMode;
+
+    Meta({
+        required this.sourceMode,
+    });
+
+    factory Meta.fromJson(Map<String, dynamic> json) => Meta(
+        sourceMode: json["sourceMode"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "sourceMode": sourceMode,
+    };
+}
+
+class Results {
+    String first;
+    String second;
+    String third;
+    String last3;
+    String last2;
+
+    Results({
+        required this.first,
+        required this.second,
+        required this.third,
+        required this.last3,
+        required this.last2,
+    });
+
+    factory Results.fromJson(Map<String, dynamic> json) => Results(
+        first: json["first"],
+        second: json["second"],
+        third: json["third"],
+        last3: json["last3"],
+        last2: json["last2"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "first": first,
+        "second": second,
+        "third": third,
+        "last3": last3,
+        "last2": last2,
+    };
 }

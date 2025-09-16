@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // สำหรับ inputFormatters
 import 'package:http/http.dart' as http;
 import 'package:lotto/pages/welcome_page.dart';
 import '../config/config.dart';
-import '../models/request/req_register.dart';
 
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
@@ -19,6 +19,9 @@ class _RegisterPageState extends State<Register> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
+  final _phone = TextEditingController();
+  final _money = TextEditingController();
+
   bool _showPass = false;
   bool _submitting = false;
   String? url;
@@ -40,6 +43,8 @@ class _RegisterPageState extends State<Register> {
     _email.dispose();
     _password.dispose();
     _confirm.dispose();
+    _phone.dispose();
+    _money.dispose();
     super.dispose();
   }
 
@@ -55,23 +60,25 @@ class _RegisterPageState extends State<Register> {
 
     setState(() => _submitting = true);
     try {
-      final req = RegisterRequest(
-        username: _username.text.trim(),
-        email: _email.text.trim(),
-        password: _password.text,
-      );
+      final payload = {
+        "username": _username.text.trim(),
+        "email": _email.text.trim(),
+        "password": _password.text,
+        "phone": _phone.text.trim(),
+        "money": double.tryParse(_money.text.trim()) ?? 0,
+      };
 
       final resp = await http.post(
         Uri.parse('${url!}/register'),
         headers: const {"Content-Type": "application/json; charset=utf-8"},
-        body: registerRequestToJson(req),
+        body: jsonEncode(payload),
       );
 
       if (resp.statusCode == 201) {
-        final data = registerResponseFromJson(resp.body);
-        if (data.success) {
+        final data = jsonDecode(resp.body);
+        if (data["success"] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(' ${data.message}')),
+            SnackBar(content: Text('${data["message"]}')),
           );
           Navigator.pushReplacement(
             context,
@@ -79,7 +86,7 @@ class _RegisterPageState extends State<Register> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(' ${data.message}')),
+            SnackBar(content: Text('${data["message"] ?? "Register failed"}')),
           );
         }
       } else {
@@ -141,6 +148,7 @@ class _RegisterPageState extends State<Register> {
                               ),
                             ),
                             const SizedBox(height: 20),
+                            // Username
                             TextFormField(
                               controller: _username,
                               textInputAction: TextInputAction.next,
@@ -152,12 +160,13 @@ class _RegisterPageState extends State<Register> {
                             ),
                             const SizedBox(height: 12),
 
+                            // Email
                             TextFormField(
                               controller: _email,
                               textInputAction: TextInputAction.next,
                               keyboardType: TextInputType.emailAddress,
-                              decoration:
-                                  _decorate("Email", 'assets/images/email.png'),
+                              decoration: _decorate(
+                                  "Email", 'assets/images/email.png'),
                               validator: (v) {
                                 final s = v?.trim() ?? '';
                                 if (s.isEmpty) return "กรอก Email";
@@ -168,6 +177,43 @@ class _RegisterPageState extends State<Register> {
                               },
                             ),
                             const SizedBox(height: 12),
+
+                            // Phone
+                            TextFormField(
+                              controller: _phone,
+                              textInputAction: TextInputAction.next,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              decoration: _decorate(
+                                  "Phone", 'assets/images/p1.png'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Money
+                            TextFormField(
+                              controller: _money,
+                              textInputAction: TextInputAction.next,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                              ],
+                              decoration: _decorate(
+                                  "Money", 'assets/images/m1.png'),
+                              validator: (v) {
+                                final s = (v ?? '').trim();
+                                if (s.isEmpty) return "กรอกจำนวนเงินเริ่มต้น";
+                                final n = double.tryParse(s);
+                                if (n == null) return "ตัวเลขไม่ถูกต้อง";
+                                if (n < 0) return "ต้องมากกว่าหรือเท่ากับ 0";
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Password
                             TextFormField(
                               controller: _password,
                               textInputAction: TextInputAction.next,
@@ -193,7 +239,7 @@ class _RegisterPageState extends State<Register> {
                             ),
                             const SizedBox(height: 12),
 
-                        
+                            // Confirm password
                             TextFormField(
                               controller: _confirm,
                               textInputAction: TextInputAction.done,
@@ -206,6 +252,7 @@ class _RegisterPageState extends State<Register> {
                             ),
                             const SizedBox(height: 10),
 
+                            // Button
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -218,9 +265,7 @@ class _RegisterPageState extends State<Register> {
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                                onPressed: _submitting
-                                    ? null
-                                    : register, // disable ตอนกำลังส่ง
+                                onPressed: _submitting ? null : register,
                                 child: Padding(
                                   padding: const EdgeInsets.all(4),
                                   child: _submitting
@@ -278,8 +323,7 @@ class _RegisterPageState extends State<Register> {
     return InputDecoration(
       prefixIcon: Padding(
         padding: const EdgeInsets.all(12),
-        child:
-            Image.asset(iconPath, width: 24, height: 24, fit: BoxFit.contain),
+        child: Image.asset(iconPath, width: 24, height: 24, fit: BoxFit.contain),
       ),
       labelText: label,
       labelStyle: const TextStyle(
@@ -290,15 +334,15 @@ class _RegisterPageState extends State<Register> {
       suffixIcon: trailing,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(22),
-        borderSide: const BorderSide(
-          color: Color.fromARGB(255, 217, 230, 247),
+        borderSide: BorderSide(
+          color: Colors.grey.shade300,
           width: 2,
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(22),
         borderSide: const BorderSide(
-          color: Color.fromARGB(255, 217, 230, 247),
+          color: Color(0xFF1291FF),
           width: 2,
         ),
       ),

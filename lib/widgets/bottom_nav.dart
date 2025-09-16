@@ -26,7 +26,7 @@ class _MemberShellState extends State<MemberShell> {
     const LottoHome(),
     const CheckLotto(),
     const BuyTicket(),
-    const WalletLotto(),
+    WalletLotto(),
     const ProfileLotto(),
   ];
  void _askLogin() {

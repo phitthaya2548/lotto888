@@ -20,12 +20,12 @@ class AuthService {
   static Future<String?> getUsername() async{
     return await _storage.read(key: _kUsername);
   }
+  static Future<String?> getId() async{
+    return await _storage.read(key: _kUserId);
+  }
 
   static Future<bool> isLoggedIn() async {
     return (await _storage.read(key: _kLoggedIn)) == 'true';
-  }
-  static Future<String?> getToken() async {
-    return await _storage.read(key: _kToken);
   }
   static Future<String?> getRole() async {
     return await _storage.read(key: _kRole);

@@ -374,7 +374,7 @@ void _showGetDialog({
                             if (v != null) {
                               await _fetchBySelectedDraw(v);
                             } else {
-                              // ถ้า clear การเลือก ให้กลับไปโชว์ “ล่าสุด”
+                           
                               setState(() => selectedResult = null);
                             }
                           },

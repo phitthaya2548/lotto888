@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import 'package:lotto/config/config.dart';
-import 'package:lotto/models/response/les_lish_balanc.dart';
 import 'package:lotto/models/response/res_balance.dart';
 import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/widgets/app_header.dart';
@@ -22,7 +23,12 @@ class _WalletLottoState extends State<WalletLotto> {
   int _balance = 0;
   bool _loading = true;
 
-  final _money = NumberFormat('#,##0', 'th_TH');
+  // ตัวช่วยฟอร์แมต (เดือนภาษาอังกฤษ)
+  final _money = NumberFormat('#,##0', 'en_US');
+  final _dateFmt = DateFormat('d MMM yyyy, HH:mm', 'en_US');
+
+  // รายการธุรกรรมจาก API
+  List<Map<String, dynamic>> _txs = [];
 
   @override
   void initState() {
@@ -33,40 +39,50 @@ class _WalletLottoState extends State<WalletLotto> {
   Future<void> _init() async {
     try {
       final config = await Configuration.getConfig();
-      url = (config['apiEndpoint'] ?? '').toString();
+      url = (config['apiEndpoint'] ?? '').toString().replaceAll(RegExp(r'/+$'), '');
       await showBalance();
-      await showLishBalance();
+      await showTransactions();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('โหลดค่าตั้งต้นไม่สำเร็จ: $e')),
+        SnackBar(content: Text('Failed to initialize: $e')),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  Future<void> showLishBalance() async {
+  Future<void> showTransactions() async {
     if (url.isEmpty) return;
     try {
       final userId = await AuthService.getId();
       final uri = Uri.parse('$url/wallets/transactions')
-          .replace(queryParameters: {'userId': userId.toString()});
+          .replace(queryParameters: {'userId': userId.toString(), 'limit': '100'});
 
-      final resp = await http.get(uri);
+      final sw = Stopwatch()..start();
+      final resp = await http.get(uri).timeout(const Duration(seconds: 12));
+      log('GET /wallets/transactions took ${sw.elapsedMilliseconds} ms');
 
       if (resp.statusCode == 200) {
-        final data = responseRandomListBalanceFromJson(resp.body);
-        log('balance: ${data.toJson()}');
-        setState(() {});
+        final obj = jsonDecode(resp.body) as Map<String, dynamic>;
+        final items = (obj['items'] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+
+        if (!mounted) return;
+        setState(() {
+          _txs = items;
+        });
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('โหลดยอดเงินไม่สำเร็จ (${resp.statusCode})')),
+          SnackBar(content: Text('Load transactions failed (${resp.statusCode})')),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
@@ -78,29 +94,33 @@ class _WalletLottoState extends State<WalletLotto> {
       final uri = Uri.parse('$url/wallets/balance')
           .replace(queryParameters: {'userId': userId.toString()});
 
+      final sw = Stopwatch()..start();
       final resp = await http.get(uri).timeout(const Duration(seconds: 12));
+      log('GET /wallets/balance took ${sw.elapsedMilliseconds} ms');
 
       if (resp.statusCode == 200) {
         final data = responseRandomBalanceFromJson(resp.body);
-        log('balance: ${data.toJson()}');
         if (!mounted) return;
         setState(() {
           _balance = data.wallet.balance;
         });
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('โหลดยอดเงินไม่สำเร็จ (${resp.statusCode})')),
+          SnackBar(content: Text('Load balance failed (${resp.statusCode})')),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
 
   Future<void> _onRefresh() async {
     await showBalance();
+    await showTransactions();
   }
 
   @override
@@ -120,6 +140,7 @@ class _WalletLottoState extends State<WalletLotto> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            // ยอดคงเหลือ
             SliverToBoxAdapter(
               child: Container(
                 margin: const EdgeInsets.all(16),
@@ -148,7 +169,7 @@ class _WalletLottoState extends State<WalletLotto> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "ยอดเงินคงเหลือ",
+                          "Available Balance",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -166,7 +187,7 @@ class _WalletLottoState extends State<WalletLotto> {
                                 ),
                               )
                             : Text(
-                                "${_money.format(_balance)} บาท",
+                                "${_money.format(_balance)} THB",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 22,
@@ -179,12 +200,13 @@ class _WalletLottoState extends State<WalletLotto> {
                 ),
               ),
             ),
+
+            // หัวข้อ
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: const Text(
-                  "รายการ",
+                  "Transactions",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -193,84 +215,108 @@ class _WalletLottoState extends State<WalletLotto> {
                 ),
               ),
             ),
-            // TODO: แทนที่ด้วยรายการจริงจาก API เมื่อพร้อม
-            SliverToBoxAdapter(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    )
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    _TxLeft(
-                        title: "สถานะ: ถูกรางวัล",
-                        subtitle: "รหัสการเดิมพัน ABC123"),
-                    _TxRight(
-                        amountText: "1,000,000 บาท",
-                        icon: Icons.check_circle,
-                        color: Colors.green),
-                  ],
-                ),
-              ),
+
+            // รายการธุรกรรมจริง
+            SliverList.builder(
+              itemCount: _txs.length,
+              itemBuilder: (_, i) {
+                final t = _txs[i];
+
+                // amount เป็นสตริงในตัวอย่าง ("-100.00")
+                final amountStr = (t['amount'] ?? '0').toString().replaceAll(',', '');
+                final amount = double.tryParse(amountStr) ?? 0.0;
+                final isIn = amount > 0;
+
+                final txType = (t['tx_type'] ?? '').toString(); // PURCHASE/DEPOSIT/PRIZE...
+                final note = (t['note'] ?? '').toString();
+                final refType = (t['ref_type'] ?? '').toString();
+                final refId = (t['ref_id'] ?? '').toString();
+
+                // วันที่เป็น ISO string -> ฟอร์แมตเดือนอังกฤษ
+                final createdAtStr = () {
+                  final raw = t['created_at']?.toString();
+                  if (raw == null || raw.isEmpty) return '';
+                  try {
+                    final dt = DateTime.parse(raw).toLocal();
+                    return _dateFmt.format(dt);
+                  } catch (_) {
+                    return raw;
+                  }
+                }();
+
+                final title = txType.isEmpty ? 'Transaction' : txType;
+                final subtitle = note.isNotEmpty
+                    ? note
+                    : [refType, refId].where((e) => e.isNotEmpty).join(' ');
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      )
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // ซ้าย
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            if (subtitle.isNotEmpty)
+                              Text(subtitle, style: const TextStyle(color: Colors.black54)),
+                            const SizedBox(height: 4),
+                            Text(createdAtStr,
+                                style: const TextStyle(color: Colors.black38, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // ขวา
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Icon(
+                            isIn ? Icons.call_received : Icons.call_made,
+                            color: isIn ? Colors.green : Colors.red,
+                            size: 22,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            (isIn ? '+' : '-') + _money.format(amount.abs()) + ' THB',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
+
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _TxLeft extends StatelessWidget {
-  const _TxLeft({required this.title, required this.subtitle});
-  final String title;
-  final String subtitle;
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.black87)),
-        const SizedBox(height: 6),
-        Text(subtitle, style: const TextStyle(color: Colors.black54)),
-      ],
-    );
-  }
-}
-
-class _TxRight extends StatelessWidget {
-  const _TxRight(
-      {required this.amountText, required this.icon, required this.color});
-  final String amountText;
-  final IconData icon;
-  final Color color;
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 6),
-        Text(
-          amountText,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-      ],
     );
   }
 }

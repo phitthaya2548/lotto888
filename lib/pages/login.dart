@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:lotto/pages/admin/widgets/nav_admin.dart';
 import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/widgets/bottom_nav.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import '../config/config.dart';
 import '../models/request/req_login.dart';
 import '../models/response/res_login.dart';
@@ -30,37 +30,16 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    Configuration.getConfig().then((config) {
-      url = (config['apiEndpoint'] ?? '').toString();
-    });
+    Configuration.getConfig().then(
+      (config) {
+        url = config['apiEndpoint'];
+      },
+    );
   }
 
-  // ---- เพิ่ม helper สำหรับยิง HTTP + log ผล ----
-  Future<http.Response> _post(
-    Uri uri, {
-    Map<String, String>? headers,
-    Object? body,
-  }) async {
-    debugPrint('[HTTP] POST $uri');
-    if (headers != null) debugPrint('[HTTP] headers: $headers');
-    if (body != null) debugPrint('[HTTP] body(out): $body');
-    try {
-      final resp = await http.post(uri, headers: headers, body: body);
-      final ct = (resp.headers['content-type'] ?? '').toLowerCase();
-      final head =
-          resp.body.length > 300 ? resp.body.substring(0, 300) : resp.body;
-      debugPrint('[HTTP] <- ${resp.statusCode} ct=$ct');
-      debugPrint('[HTTP] body(head): $head');
-      return resp;
-    } catch (e, st) {
-      debugPrint('[HTTP] EXCEPTION: $e\n$st');
-      rethrow;
-    }
-  }
-
-// ---- แทนที่ฟังก์ชัน login() เดิม ----
   Future<void> login() async {
     if (url.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('API endpoint ยังไม่พร้อม')),
       );
@@ -68,32 +47,55 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     setState(() => _busy = true);
+
     try {
-      // ทำให้ base url สะอาด (ตัด / ท้ายๆ ออก)
-      final base = url.replaceAll(RegExp(r'/+$'), '');
+      final uri = Uri.parse('$url/login');
 
-      final resp = await _post(
-        Uri.parse('$base/login'),
-        headers: const {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'username': _username.text.trim(),
-          'password': _passCtrl.text,
-        }),
-      );
+      final resp = await http
+          .post(
+            uri,
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode(Requestlogin(
+              username: _username.text.trim(),
+              password: _passCtrl.text.trim(),
+            ).toJson()),
+          )
+          .timeout(const Duration(seconds: 15));
 
-      final ct = (resp.headers['content-type'] ?? '').toLowerCase();
-      final isJson = ct.contains('application/json');
+      // ตรวจว่าเป็น JSON จริงไหม
+      final isJson =
+          (resp.headers['content-type'] ?? '').toLowerCase().contains('json');
 
-      if (resp.statusCode == 200 && isJson) {
-        final res = responseloginFromJson(resp.body);
+      if (resp.statusCode == 200) {
+        // พยายาม parse เป็นโมเดล ถ้าไม่ได้ให้ fallback เป็น map
+        dynamic body;
+        try {
+          body = isJson ? jsonDecode(resp.body) : resp.body;
+        } catch (_) {
+          body = resp.body;
+        }
 
-        // บันทึก session ก่อน แล้วค่อยนำทาง
+        late final res;
+        if (body is Map<String, dynamic> || body is Map) {
+          res = responseloginFromJson(jsonEncode(body));
+        } else {
+          // เซิร์ฟเวอร์ตอบไม่ใช่ JSON → แจ้งเตือนชัดเจน
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('รูปแบบคำตอบไม่ถูกต้อง (ไม่ใช่ JSON)')),
+          );
+          return;
+        }
+
+        // ป้องกัน role เป็น null / เว้นวรรคแปลก
+        final role = (res.user.role ?? '').toString().trim().toUpperCase();
+
+        // เซฟ session ก่อน navigate (กันกรณีหน้าใหม่อ่าน session ไม่ทัน)
         await AuthService.saveSession(res);
 
-        final role = (res.user.role ?? '').toString().toUpperCase();
+        if (!mounted) return;
+
         Widget nextPage;
         switch (role) {
           case 'ADMIN':
@@ -104,26 +106,36 @@ class _LoginPageState extends State<LoginPage> {
             nextPage = const MemberShell();
         }
 
-        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => nextPage),
         );
       } else {
-        // ถ้าไม่ใช่ JSON อย่าพยายาม jsonDecode — แสดงแค่ status
-        final msg = isJson
-            ? (jsonDecode(resp.body)['message'] ??
-                    'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})')
-                .toString()
-            : 'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})';
+        // ดึง message อย่างปลอดภัย
+        String msg = 'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})';
+        if (isJson) {
+          try {
+            final m = jsonDecode(resp.body);
+            final maybeMsg = (m is Map) ? (m['message'] ?? m['error']) : null;
+            if (maybeMsg != null && maybeMsg.toString().trim().isNotEmpty) {
+              msg = maybeMsg.toString();
+            }
+          } catch (_) {}
+        }
         if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(msg)));
       }
+    } on TimeoutException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('เครือข่ายช้า/หมดเวลาเชื่อมต่อ (15s)')),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('ผิดพลาด: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ผิดพลาด: $e')),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }

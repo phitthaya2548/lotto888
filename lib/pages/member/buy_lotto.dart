@@ -1,25 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
+import 'dart:developer' as dev;
+import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
-
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:lotto/config/config.dart';
 import 'package:lotto/models/request/req_butlotto.dart';
 import 'package:lotto/models/response/res_lotto.dart';
+import 'package:lotto/models/response/res_profile.dart';
 import 'package:lotto/pages/auth_service.dart';
-
 import 'package:lotto/pages/member/my_lotto.dart';
-
 import 'package:lotto/widgets/app_drawer.dart';
 import 'package:lotto/widgets/app_header.dart';
-
-import 'dart:developer' as dev;
-import 'dart:math' as math;
 
 class BuyTicket extends StatefulWidget {
   const BuyTicket({Key? key}) : super(key: key);
@@ -41,9 +38,9 @@ class _BuyTicketState extends State<BuyTicket> {
 
   List<Map<String, dynamic>> allTickets = [];
   List<Map<String, dynamic>> viewTickets = [];
-
+  var balance = 0.0;
   String _random6(Random r) => List.generate(6, (_) => r.nextInt(10)).join();
-
+  final _money = NumberFormat('#,##0.00', 'th_TH');
   List<Map<String, dynamic>> _genMockTickets(int count) {
     final r = math.Random();
     final seen = <String>{};
@@ -61,6 +58,40 @@ class _BuyTicketState extends State<BuyTicket> {
     return out;
   }
 
+  Future<void> _loadmoney() async {
+    try {
+      final cfg = await Configuration.getConfig();
+      final idStr = await AuthService.getId();
+      final userId = idStr != null ? int.tryParse(idStr) : null;
+
+      setState(() {
+        url = (cfg['apiEndpoint'] ?? '')
+            .toString()
+            .replaceAll(RegExp(r'/+$'), '');
+      });
+
+      if (url.isEmpty || userId == null || userId <= 0) {
+        ('invalid baseUrl/userId');
+        return;
+      }
+
+      final uri = Uri.parse("$url/users/profile/$userId");
+      final resp = await http.get(uri, headers: {'Accept': 'application/json'});
+      if (resp.statusCode != 200) {
+        ("fetch profile failed: ${resp.statusCode} ${resp.body}");
+        return;
+      }
+
+      final data = responseRandomProfileFromJson(resp.body);
+      setState(() {
+        balance = data.wallet.balance.toDouble();
+      });
+      if (!mounted) return;
+    } catch (e, st) {
+      ('loadUser error: $e\n$st');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -69,7 +100,7 @@ class _BuyTicketState extends State<BuyTicket> {
       final config = await Configuration.getConfig();
       final id = await AuthService.getId();
 
-      final mock = _genMockTickets(100); // ✅ สุ่ม 100 ใบ
+      final mock = _genMockTickets(100);
 
       setState(() {
         url = (config['apiEndpoint'] ?? '')
@@ -82,6 +113,7 @@ class _BuyTicketState extends State<BuyTicket> {
       });
 
       await _fetchLatest();
+      await _loadmoney();
     }();
 
     _searchCtrl.addListener(() => setState(() {}));
@@ -365,51 +397,56 @@ class _BuyTicketState extends State<BuyTicket> {
       ),
     );
   }
+
   Future<bool> _ensureBuyable(String number6) async {
-  try {
-    final uri = Uri.parse('$url/tickets/check').replace(queryParameters: {
-      'drawId': _currentDrawId.toString(),
-      'number': number6,
-    });
+    try {
+      final uri = Uri.parse('$url/tickets/check').replace(queryParameters: {
+        'drawId': _currentDrawId.toString(),
+        'number': number6,
+      });
 
-    final resp = await http
-        .get(uri, headers: {'Accept': 'application/json'})
-        .timeout(const Duration(seconds: 8));
+      final resp = await http.get(uri, headers: {
+        'Accept': 'application/json'
+      }).timeout(const Duration(seconds: 8));
 
-    if (resp.statusCode == 200) {
-      final data = jsonDecode(resp.body) as Map<String, dynamic>;
-      final canBuy = data['canBuy'] == true;
-      if (!canBuy) {
-        // mark ให้ปุ่มซีด/ห้ามกด
-        setState(() {
-          viewTickets = viewTickets.map((m) {
-            final sixM = _toSixDigits((m['number'] as String?) ?? '');
-            return (sixM == number6) ? {...m, 'soldOut': true} : m;
-          }).toList();
-        });
-        Get.snackbar("ซื้อไม่ได้", "เลข ${_format6(number6)} ถูกซื้อแล้ว",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.shade700, colorText: Colors.white);
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        final canBuy = data['canBuy'] == true;
+        if (!canBuy) {
+          // mark ให้ปุ่มซีด/ห้ามกด
+          setState(() {
+            viewTickets = viewTickets.map((m) {
+              final sixM = _toSixDigits((m['number'] as String?) ?? '');
+              return (sixM == number6) ? {...m, 'soldOut': true} : m;
+            }).toList();
+          });
+          Get.snackbar("ซื้อไม่ได้", "เลข ${_format6(number6)} ถูกซื้อแล้ว",
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.orange.shade700,
+              colorText: Colors.white);
+        }
+        return canBuy;
+      } else {
+        Get.snackbar("ผิดพลาด", "เช็คสิทธิ์ซื้อไม่สำเร็จ (${resp.statusCode})",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red.shade600,
+            colorText: Colors.white);
+        return false;
       }
-      return canBuy;
-    } else {
-      Get.snackbar("ผิดพลาด", "เช็คสิทธิ์ซื้อไม่สำเร็จ (${resp.statusCode})",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade600, colorText: Colors.white);
+    } on TimeoutException {
+      Get.snackbar("ช้าเกินไป", "การเชื่อมต่อหมดเวลา ลองใหม่อีกครั้ง",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.shade600,
+          colorText: Colors.white);
+      return false;
+    } catch (e) {
+      Get.snackbar("เครือข่ายผิดพลาด", e.toString(),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.shade600,
+          colorText: Colors.white);
       return false;
     }
-  } on TimeoutException {
-    Get.snackbar("ช้าเกินไป", "การเชื่อมต่อหมดเวลา ลองใหม่อีกครั้ง",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600, colorText: Colors.white);
-    return false;
-  } catch (e) {
-    Get.snackbar("เครือข่ายผิดพลาด", e.toString(),
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600, colorText: Colors.white);
-    return false;
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -449,9 +486,9 @@ class _BuyTicketState extends State<BuyTicket> {
                           height: 28,
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          "1000฿",
-                          style: TextStyle(
+                        Text(
+                          '${_money.format(balance)} ฿',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -692,7 +729,7 @@ class _BuyTicketState extends State<BuyTicket> {
                                       child: IgnorePointer(
                                         ignoring: isSold,
                                         child: InkWell(
-                                          onTap: () async { 
+                                          onTap: () async {
                                             if (_currentDrawId <= 0) {
                                               Get.snackbar("ยังไม่พร้อม",
                                                   "กำลังโหลดงวดล่าสุด กรุณาลองใหม่อีกครั้ง",
@@ -718,12 +755,12 @@ class _BuyTicketState extends State<BuyTicket> {
                                               );
                                               return;
                                             }
-                                              final canBuy = await _ensureBuyable(six);
-  if (!canBuy) return;
+                                            final canBuy =
+                                                await _ensureBuyable(six);
+                                            if (!canBuy) return;
                                             _confirmBuy(six,
                                                 (t['price'] as int?) ?? 100);
                                           },
-
                                           borderRadius:
                                               BorderRadius.circular(40),
                                           child: const CircleAvatar(
@@ -760,7 +797,7 @@ class _BuyTicketState extends State<BuyTicket> {
 
   Future<void> _onRefresh() async {
     await _fetchLatest();
-
+    await _loadmoney();
     if (mounted) {
       setState(() {
         _searchCtrl.clear();
@@ -769,5 +806,3 @@ class _BuyTicketState extends State<BuyTicket> {
     }
   }
 }
-
-

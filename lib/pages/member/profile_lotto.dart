@@ -1,8 +1,11 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:lotto/config/config.dart';
+import 'package:lotto/models/response/res_profile.dart';
 import 'package:lotto/pages/auth_service.dart';
 import 'package:lotto/pages/home_lotto.dart';
+import 'package:lotto/pages/member/edit_profille.dart';
 import 'package:lotto/widgets/app_drawer.dart';
 import 'package:lotto/widgets/app_header.dart';
 
@@ -17,6 +20,12 @@ class _ProfileLottoState extends State<ProfileLotto> {
   String? _username;
   int? _userId;
   bool _loading = true;
+  String url = "";
+  static const brand = Color(0xFF007BFF);
+
+  String _baseUrl = '';
+
+  ResponseRandomProfile? _profile;
 
   @override
   void initState() {
@@ -25,11 +34,39 @@ class _ProfileLottoState extends State<ProfileLotto> {
   }
 
   Future<void> _loadUser() async {
-    final session = await AuthService.getUsername();
-    setState(() {
-      _username = session;
-      _loading = false;
-    });
+    try {
+      final cfg = await Configuration.getConfig();
+      final idStr = await AuthService.getId();
+      final userId = idStr != null ? int.tryParse(idStr) : null;
+
+      setState(() {
+        _baseUrl = (cfg['apiEndpoint'] ?? '')
+            .toString()
+            .replaceAll(RegExp(r'/+$'), '');
+      });
+
+      if (_baseUrl.isEmpty || userId == null || userId <= 0) {
+        log('invalid baseUrl/userId');
+        return;
+      }
+
+      final uri = Uri.parse("$_baseUrl/users/profile/$userId");
+      final resp = await http.get(uri, headers: {'Accept': 'application/json'});
+      if (resp.statusCode != 200) {
+        log("fetch profile failed: ${resp.statusCode} ${resp.body}");
+        return;
+      }
+
+      final data = responseRandomProfileFromJson(resp.body);
+      if (!mounted) return;
+      setState(() {
+        _profile = data;
+      });
+    } catch (e, st) {
+      log('loadUser error: $e\n$st');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _logout() async {
@@ -44,11 +81,13 @@ class _ProfileLottoState extends State<ProfileLotto> {
   @override
   Widget build(BuildContext context) {
     const brand = Color(0xFF007BFF);
-
+    final user = _profile?.user;
+    final balance = _profile?.wallet.balance ?? 0.0;
+    final ticketsTotal = _profile?.tickets.total ?? 0;
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppHeader(),
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(),
       body: RefreshIndicator(
         onRefresh: _loadUser,
         child: SingleChildScrollView(
@@ -84,7 +123,9 @@ class _ProfileLottoState extends State<ProfileLotto> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      "ชื่อ ${_username ?? '-'}",
+                                      user != null
+                                          ? "${user.fullName}"
+                                          : "กำลังโหลด...",
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 18,
@@ -125,10 +166,12 @@ class _ProfileLottoState extends State<ProfileLotto> {
                                   Image.asset('assets/images/bitcoin.png',
                                       width: 32, height: 32),
                                   const SizedBox(height: 4),
-                                  const Text("0",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
+                                  Text(
+                                    "${(balance)}",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
                                   const Text("พอยต์"),
                                 ],
                               ),
@@ -140,10 +183,12 @@ class _ProfileLottoState extends State<ProfileLotto> {
                                   Image.asset('assets/images/tiket1.png',
                                       width: 32, height: 32),
                                   const SizedBox(height: 4),
-                                  const Text("0",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
+                                  Text(
+                                    "$ticketsTotal",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
                                   const Text("สลากของฉัน"),
                                 ],
                               ),
@@ -169,7 +214,16 @@ class _ProfileLottoState extends State<ProfileLotto> {
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () {},
+                  onTap: () async {
+                    final updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const EditProfilePage()),
+                    );
+                    if (updated != null) {
+                      _loadUser();
+                    }
+                  },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 18),
@@ -221,3 +275,5 @@ class _ProfileLottoState extends State<ProfileLotto> {
     );
   }
 }
+
+

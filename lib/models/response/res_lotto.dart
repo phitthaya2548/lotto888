@@ -32,39 +32,31 @@ class Draw {
     int id;
     int drawNumber;
     DateTime drawDate;
-    String status;
     Results results;
     Amounts amounts;
-    Meta meta;
 
     Draw({
         required this.id,
         required this.drawNumber,
         required this.drawDate,
-        required this.status,
         required this.results,
         required this.amounts,
-        required this.meta,
     });
 
     factory Draw.fromJson(Map<String, dynamic> json) => Draw(
         id: json["id"],
         drawNumber: json["drawNumber"],
         drawDate: DateTime.parse(json["drawDate"]),
-        status: json["status"],
         results: Results.fromJson(json["results"]),
         amounts: Amounts.fromJson(json["amounts"]),
-        meta: Meta.fromJson(json["meta"]),
     );
 
     Map<String, dynamic> toJson() => {
         "id": id,
         "drawNumber": drawNumber,
-        "drawDate": drawDate.toIso8601String(),
-        "status": status,
+        "drawDate": "${drawDate.year.toString().padLeft(4, '0')}-${drawDate.month.toString().padLeft(2, '0')}-${drawDate.day.toString().padLeft(2, '0')}",
         "results": results.toJson(),
         "amounts": amounts.toJson(),
-        "meta": meta.toJson(),
     };
 }
 
@@ -97,22 +89,6 @@ class Amounts {
         "prize3Amount": prize3Amount,
         "last3Amount": last3Amount,
         "last2Amount": last2Amount,
-    };
-}
-
-class Meta {
-    String sourceMode;
-
-    Meta({
-        required this.sourceMode,
-    });
-
-    factory Meta.fromJson(Map<String, dynamic> json) => Meta(
-        sourceMode: json["sourceMode"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "sourceMode": sourceMode,
     };
 }
 

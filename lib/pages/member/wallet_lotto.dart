@@ -43,10 +43,7 @@ class _WalletLottoState extends State<WalletLotto> {
       await showBalance();
       await showTransactions();
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to initialize: $e')),
-      );
+     
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -74,10 +71,7 @@ class _WalletLottoState extends State<WalletLotto> {
           _txs = items;
         });
       } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Load transactions failed (${resp.statusCode})')),
-        );
+       
       }
     } catch (e) {
       if (!mounted) return;
@@ -105,10 +99,6 @@ class _WalletLottoState extends State<WalletLotto> {
           _balance = data.wallet.balance;
         });
       } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Load balance failed (${resp.statusCode})')),
-        );
       }
     } catch (e) {
       if (!mounted) return;

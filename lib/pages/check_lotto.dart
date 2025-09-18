@@ -157,6 +157,7 @@ class _CheckLottoState extends State<CheckLotto> {
         'date': picked.date,
         'drawNumber': picked.drawNumber.toString(),
       });
+      log(picked.drawNumber.toString());
       final res = await http.get(uri);
       log('bydate ${res.statusCode} ${res.body}');
 
@@ -165,9 +166,9 @@ class _CheckLottoState extends State<CheckLotto> {
         // ใช้งาน:
         final r = data.draw.results;
         final a = data.draw.amounts;
-         setState(() {
-      selectedResult = data; // เก็บไว้ใน state
-    });
+        setState(() {
+          selectedResult = data; // เก็บไว้ใน state
+        });
         // r.first, r.last3, a.prize1Amount, ...
       } else if (res.statusCode == 404) {
         if (!mounted) return;
@@ -189,96 +190,95 @@ class _CheckLottoState extends State<CheckLotto> {
 
   // ===== Actions =====
 
-void _checkLotto() {
-  final number = digits.join();
+  void _checkLotto() {
+    final number = digits.join();
 
-  if (_selectedDraw == null ||
-      number.length != 6 ||
-      digits.any((d) => d.isEmpty)) {
-    _showGetDialog(
-      title: 'ข้อมูลไม่ครบ',
-      message: 'กรุณาเลือกงวด และกรอกเลขให้ครบ 6 หลัก',
-      success: false,
-    );
-    return;
+    if (_selectedDraw == null ||
+        number.length != 6 ||
+        digits.any((d) => d.isEmpty)) {
+      _showGetDialog(
+        title: 'ข้อมูลไม่ครบ',
+        message: 'กรุณาเลือกงวด และกรอกเลขให้ครบ 6 หลัก',
+        success: false,
+      );
+      return;
+    }
+
+    final showing = selectedResult ?? latest;
+    if (showing == null) {
+      _showGetDialog(
+        title: 'ยังไม่มีข้อมูล',
+        message: 'ยังไม่มีข้อมูลผลรางวัลของงวดที่เลือก',
+        success: false,
+      );
+      return;
+    }
+
+    final r = showing.draw.results;
+    final a = showing.draw.amounts;
+
+    String? message;
+
+    if (number == r.first) {
+      message = "ถูกรางวัลที่ 1! ได้ ${_fmt(a.prize1Amount)} บาท";
+    } else if (number == r.second) {
+      message = "ถูกรางวัลที่ 2! ได้ ${_fmt(a.prize2Amount)} บาท";
+    } else if (number == r.third) {
+      message = "ถูกรางวัลที่ 3! ได้ ${_fmt(a.prize3Amount)} บาท";
+    } else if (number.endsWith(r.last3)) {
+      message = "ถูกรางวัลเลขท้าย 3 ตัว! ได้ ${_fmt(a.last3Amount)} บาท";
+    } else if (number.endsWith(r.last2)) {
+      message = "ถูกรางวัลเลขท้าย 2 ตัว! ได้ ${_fmt(a.last2Amount)} บาท";
+    }
+
+    if (message != null) {
+      _showGetDialog(
+        title: 'ยินดีด้วย 🎉',
+        message: message,
+        success: true,
+      );
+    } else {
+      _showGetDialog(
+        title: 'ไม่ถูกรางวัล',
+        message: 'เสียใจด้วย ครั้งหน้าสู้ใหม่!',
+        success: false,
+      );
+    }
   }
 
-  final showing = selectedResult ?? latest;
-  if (showing == null) {
-    _showGetDialog(
-      title: 'ยังไม่มีข้อมูล',
-      message: 'ยังไม่มีข้อมูลผลรางวัลของงวดที่เลือก',
-      success: false,
-    );
-    return;
-  }
-
-  final r = showing.draw.results;
-  final a = showing.draw.amounts;
-
-  String? message;
-
-  if (number == r.first) {
-    message = "ถูกรางวัลที่ 1! ได้ ${_fmt(a.prize1Amount)} บาท";
-  } else if (number == r.second) {
-    message = "ถูกรางวัลที่ 2! ได้ ${_fmt(a.prize2Amount)} บาท";
-  } else if (number == r.third) {
-    message = "ถูกรางวัลที่ 3! ได้ ${_fmt(a.prize3Amount)} บาท";
-  } else if (number.endsWith(r.last3)) {
-    message = "ถูกรางวัลเลขท้าย 3 ตัว! ได้ ${_fmt(a.last3Amount)} บาท";
-  } else if (number.endsWith(r.last2)) {
-    message = "ถูกรางวัลเลขท้าย 2 ตัว! ได้ ${_fmt(a.last2Amount)} บาท";
-  }
-
-  if (message != null) {
-    _showGetDialog(
-      title: 'ยินดีด้วย 🎉',
-      message: message,
-      success: true,
-    );
-  } else {
-    _showGetDialog(
-      title: 'ไม่ถูกรางวัล',
-      message: 'เสียใจด้วย ครั้งหน้าสู้ใหม่!',
-      success: false,
+  void _showGetDialog({
+    required String title,
+    required String message,
+    bool success = false,
+  }) {
+    Get.defaultDialog(
+      title: title,
+      titleStyle: TextStyle(
+        fontWeight: FontWeight.w800,
+        color: success ? const Color(0xFF2E7D32) : const Color(0xFFB71C1C),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (success)
+            const Icon(Icons.emoji_events, size: 48)
+          else
+            const Icon(Icons.info_outline, size: 48),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16),
+          ),
+        ],
+      ),
+      radius: 14,
+      confirm: ElevatedButton(
+        onPressed: () => Get.back(),
+        child: const Text('ปิด'),
+      ),
     );
   }
-}
-void _showGetDialog({
-  required String title,
-  required String message,
-  bool success = false,
-}) {
-  Get.defaultDialog(
-    title: title,
-    titleStyle: TextStyle(
-      fontWeight: FontWeight.w800,
-      color: success ? const Color(0xFF2E7D32) : const Color(0xFFB71C1C),
-    ),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (success)
-          const Icon(Icons.emoji_events, size: 48)
-        else
-          const Icon(Icons.info_outline, size: 48),
-        const SizedBox(height: 8),
-        Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16),
-        ),
-      ],
-    ),
-    radius: 14,
-    confirm: ElevatedButton(
-      onPressed: () => Get.back(),
-      child: const Text('ปิด'),
-    ),
-  );
-}
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -374,7 +374,6 @@ void _showGetDialog({
                             if (v != null) {
                               await _fetchBySelectedDraw(v);
                             } else {
-                           
                               setState(() => selectedResult = null);
                             }
                           },

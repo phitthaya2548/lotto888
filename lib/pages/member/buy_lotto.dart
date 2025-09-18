@@ -35,7 +35,7 @@ class _BuyTicketState extends State<BuyTicket> {
 
   int _currentDrawId = 0;
   int? _userId = 0;
-
+  int _currenNumber = 0;
   List<Map<String, dynamic>> allTickets = [];
   List<Map<String, dynamic>> viewTickets = [];
   var balance = 0.0;
@@ -135,6 +135,7 @@ class _BuyTicketState extends State<BuyTicket> {
         dev.log(data.draw.id.toString());
         setState(() {
           _currentDrawId = data.draw.id + 1;
+          _currenNumber = data.draw.drawNumber+1;
         });
       } else if (res.statusCode != 404) {
         dev.log('fetch test draw ${res.statusCode} ${res.body}');
@@ -673,7 +674,7 @@ class _BuyTicketState extends State<BuyTicket> {
                                   Row(
                                     children: [
                                       Text(
-                                        'งวดที่ $_currentDrawId',
+                                        'งวดที่ $_currenNumber',
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.black.withOpacity(.6),

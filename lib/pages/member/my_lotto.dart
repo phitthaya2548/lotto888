@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:ui';
-import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
+import 'package:http/http.dart' as http;
 import 'package:lotto/config/config.dart';
 import 'package:lotto/models/response/res_lesson.dart';
 import 'package:lotto/pages/auth_service.dart';

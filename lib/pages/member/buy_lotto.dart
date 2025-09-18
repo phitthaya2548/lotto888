@@ -46,10 +46,10 @@ class _BuyTicketState extends State<BuyTicket> {
     final seen = <String>{};
     final out = <Map<String, dynamic>>[];
     while (out.length < count) {
-      final raw = _random6(r); // 6 หลักติดกัน เช่น "123456"
+      final raw = _random6(r);
       if (seen.add(raw)) {
         out.add({
-          'number': _format6(raw), // แปลงเป็น "1 2 3 4 5 6"
+          'number': _format6(raw),
           'date': 'งวดปัจจุบัน',
           'price': 100,
         });
@@ -280,7 +280,6 @@ class _BuyTicketState extends State<BuyTicket> {
         body: requestBuylottoToJson(req),
       );
 
-      // รองรับกรณี race condition — ซื้อชนกัน ให้ถือว่าไม่สำเร็จและแจ้งผู้ใช้
       if (resp.statusCode == 409) {
         Get.snackbar(
           "ซื้อไม่สำเร็จ",

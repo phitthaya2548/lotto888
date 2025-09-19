@@ -74,10 +74,7 @@ class _WalletLottoState extends State<WalletLotto> {
        
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+     
     }
   }
 
@@ -101,10 +98,7 @@ class _WalletLottoState extends State<WalletLotto> {
       } else {
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      
     }
   }
 

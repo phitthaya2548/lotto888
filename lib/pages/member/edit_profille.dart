@@ -73,7 +73,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final profile = responseRandomProfileFromJson(resp.body);
     _profile = profile;
 
-    // ✅ กัน null ก่อนเซ็ตให้ controller.text (ห้ามส่ง null ให้ text)
     _nameCtrl.text = profile.user.fullName ?? '';
     _phoneCtrl.text = profile.user.phone ?? '';
     _emailCtrl.text = profile.user.email ?? '';
@@ -118,7 +117,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (!mounted) return;
 
       if (resp.statusCode == 200) {
-        // ✅ ไม่ parse กลับเป็น RequestProfileUpdate เพื่อเลี่ยง null ใน response
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('บันทึกข้อมูลเรียบร้อย')),
         );

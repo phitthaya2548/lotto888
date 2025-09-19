@@ -23,31 +23,20 @@ class _MyTicketState extends State<MyTicket> {
 
   String url = '';
   String? _username;
-  String? _userId; // ที่มาจาก Auth (string)
-  int? _userIdInt; // ✅ ใช้งานจริงกับ API
+  String? _userId; 
+  int? _userIdInt; 
 
-  String? _selectedDraw; // value: yyyy-MM-dd#drawNumber
+  String? _selectedDraw; 
   List<DropdownMenuItem<String>> _drawItems = const [];
   List<Draw> _draws = [];
 
-  /// tickets item:
-  /// {
-  ///   'number': '9 9 9 9 9 9',
-  ///   'raw': '999999',
-  ///   'date': '1 กันยายน 2568',
-  ///   'draw': 123,
-  ///   'claimed': bool,
-  ///   'status': 'PENDING'|'WIN'|'LOSE'|'CLAIMED',
-  ///   'statusLabel': 'ยังไม่ประกาศ'|'ถูกรางวัล ...'|'ไม่ถูกรางวัล'|'รับเงินแล้ว',
-  ///   'prizeCode': 'PRIZE1'|'PRIZE2'|'PRIZE3'|'LAST3'|'LAST2'|null,
-  ///   'prizeAmount': double,
-  /// }
+
   final List<Map<String, dynamic>> tickets = [];
 
   bool _loadingDraws = false;
   bool _loadingTickets = false;
 
-  // ---------- utils ----------
+
   String _dateStr(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   String _drawValue(Draw d) => '${_dateStr(d.drawDate)}#${d.drawNumber}';
@@ -127,12 +116,11 @@ class _MyTicketState extends State<MyTicket> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ---------- lifecycle ----------
   @override
   void initState() {
     super.initState();
 
-    // 1) โหลด config → list draws → ถ้ามี default selected ให้ลองโหลด
+
     Configuration.getConfig().then((c) async {
       final raw = (c['apiEndpoint'] ?? '').toString().trim();
       final normalized = raw.replaceAll(RegExp(r'/+$'), '');
@@ -141,11 +129,10 @@ class _MyTicketState extends State<MyTicket> {
 
       await _fetchDrawList();
       if (mounted && _selectedDraw != null) {
-        await _fetchBuyerTicketsForSelectedDraw(); // จะตามด้วย prize-check
+        await _fetchBuyerTicketsForSelectedDraw();
       }
     });
 
-    // 2) โหลด user → แปลง int → ถ้ามีงวดแล้ว โหลดตั๋ว (กัน race)
     _loadUser();
   }
 
@@ -163,7 +150,7 @@ class _MyTicketState extends State<MyTicket> {
     }
   }
 
-  // ---------- API: draw list ----------
+
   Future<void> _fetchDrawList() async {
     if (url.isEmpty) return;
     setState(() => _loadingDraws = true);
@@ -201,10 +188,10 @@ class _MyTicketState extends State<MyTicket> {
     }
   }
 
-  // ---------- API: tickets + prize-check ----------
+
   Future<void> _fetchBuyerTicketsForSelectedDraw() async {
     if (url.isEmpty) return;
-    if (_userIdInt == null) return; // ✅ ต้องเป็น int
+    if (_userIdInt == null) return;
     if (_selectedDraw == null || _selectedDraw!.isEmpty) return;
 
     setState(() => _loadingTickets = true);
@@ -213,7 +200,7 @@ class _MyTicketState extends State<MyTicket> {
       final drawDate = parsed.drawDate;
       final drawNumber = parsed.drawNumber;
 
-      // 1) list tickets ของผู้ใช้
+
       final uriList = Uri.parse('$url/tickets/by-buyer-and-draw').replace(
         queryParameters: {
           'buyer_user_id': _userIdInt!.toString(),
@@ -260,7 +247,6 @@ class _MyTicketState extends State<MyTicket> {
           ..addAll(newTickets);
       });
 
-      // 2) ตรวจรางวัล (งวดยังไม่ปิด → 409 → คง PENDING)
       await _checkPrizesForSelectedDraw(drawNumber);
     } catch (e) {
       log('fetchBuyerTickets error: $e');
@@ -331,7 +317,7 @@ class _MyTicketState extends State<MyTicket> {
           if (amount > 0 && best != null && best.isNotEmpty) {
             tickets[i]['status'] = 'WIN';
             tickets[i]['statusLabel'] = 'ถูก${_prizeLabel(best)}';
-            // 'ถูก${_prizeLabel(best)} (${_formatBaht(amount)})';
+
             tickets[i]['prizeCode'] = best;
             tickets[i]['prizeAmount'] = amount;
           } else {
@@ -347,7 +333,6 @@ class _MyTicketState extends State<MyTicket> {
     }
   }
 
-  // ---------- API: claim ----------
   Future<void> _claimTicket(int index) async {
     final t = tickets[index];
     final isWinner = t['status'] == 'WIN';
@@ -363,7 +348,6 @@ class _MyTicketState extends State<MyTicket> {
     try {
       final uri = Uri.parse('$url/draws/claim');
       final payload = {
-        // ส่งทั้งสองแบบกัน validation ฝั่ง server
         'buyerUserId': _userIdInt,
         'buyer_user_id': _userIdInt,
         'drawNumber': t['draw'],
@@ -393,10 +377,8 @@ class _MyTicketState extends State<MyTicket> {
           tickets[index]['status'] = 'CLAIMED';
           tickets[index]['statusLabel'] = 'รับเงินแล้ว';
         });
-
-        // ✅ เปิด dialog “เฉพาะตอนกดขึ้นเงิน และสำเร็จ”
         showBuyDialog(
-          username: _username, // หรือชื่อผู้ใช้จริงถ้ามี
+          username: _username, 
           prizeLabel: prizeLabel.isEmpty ? 'รางวัล' : prizeLabel,
           amountText: amountText,
           autoClose: const Duration(seconds: 8),
@@ -404,13 +386,13 @@ class _MyTicketState extends State<MyTicket> {
         return;
       }
 
-      // แสดงสาเหตุอื่น ๆ
+
       String msg;
       try {
         final m = jsonDecode(res.body);
         msg = m['message']?.toString() ?? res.body;
 
-        // ถ้า server บอกว่าเคลมไปแล้ว → sync เป็น CLAIMED แต่ “ไม่” เปิด dialog
+       
         final code = (m['code'] ?? '').toString();
         if (res.statusCode == 409 &&
             (code == 'ALREADY_REDEEMED' || code == 'DUPLICATE_PRIZE_TX')) {
@@ -433,7 +415,6 @@ class _MyTicketState extends State<MyTicket> {
     }
   }
 
-  // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -515,9 +496,9 @@ class _MyTicketState extends State<MyTicket> {
                         final isWinner = t['status'] == 'WIN';
                         final isClaimed = t['status'] == 'CLAIMED';
 
-                        // สีปุ่ม: ชนะและยังไม่เคลม = เขียวเข้ม, เคลมแล้ว = เขียวอ่อน, อื่น ๆ = เทา
+                        
                         final Color btnColor = isClaimed
-                            ? const Color(0xFFA5E8B1) // เขียวอ่อน
+                            ? const Color(0xFFA5E8B1) 
                             : (isWinner
                                 ? const Color(0xFF34C759)
                                 : Colors.grey);

@@ -266,7 +266,7 @@ class _BuyTicketState extends State<BuyTicket> {
 
     final req = RequestBuylotto(
       drawId: _currentDrawId,
-      userId: _userId!, // ใช้ user จาก session
+      userId: _userId!,
       number: number6,
       price: price,
     );
@@ -298,7 +298,6 @@ class _BuyTicketState extends State<BuyTicket> {
             (data['success'] == true || data['status'] == 'ok'));
         if (success) return true;
 
-        // ถ้า backend ไม่ส่ง success มาแต่ response 200/201
         return true;
       } else {
         String msg = 'Server error: ${resp.statusCode}';
@@ -353,7 +352,7 @@ class _BuyTicketState extends State<BuyTicket> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Get.back(), // ยกเลิก
+                  onPressed: () => Get.back(),
                   child: const Text('ยกเลิก'),
                 ),
               ),
@@ -364,7 +363,6 @@ class _BuyTicketState extends State<BuyTicket> {
                     backgroundColor: brand,
                   ),
                   onPressed: () async {
-                    // ปิด dialog ยืนยันก่อนแล้วค่อยโชว์โหลด
                     Get.back();
                     _showLoading();
                     final ok = await _buyLotto(number6: number6, price: price);
@@ -379,13 +377,13 @@ class _BuyTicketState extends State<BuyTicket> {
                         colorText: Colors.white,
                       );
 
-                      // อัปเดต UI หลังซื้อ (ตัวอย่าง: เพิ่มเข้า "สลากของฉัน" / ล้างผลค้นหา)
+                  
                       setState(() {
-                        // ใส่ตามจริงถ้าต้องการเก็บรายการที่ซื้อ
+
                         _searchCtrl.clear();
                       });
                     } else {
-                      // ล้มเหลวมี snackbar ไปแล้ว
+
                     }
                   },
                   child: const Text('ยืนยันซื้อ'),
@@ -413,7 +411,6 @@ class _BuyTicketState extends State<BuyTicket> {
         final data = jsonDecode(resp.body) as Map<String, dynamic>;
         final canBuy = data['canBuy'] == true;
         if (!canBuy) {
-          // mark ให้ปุ่มซีด/ห้ามกด
           setState(() {
             viewTickets = viewTickets.map((m) {
               final sixM = _toSixDigits((m['number'] as String?) ?? '');
@@ -460,7 +457,7 @@ class _BuyTicketState extends State<BuyTicket> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // แถบยอดเงิน (ยังเป็น mock)
+
               Padding(
                 padding: const EdgeInsets.only(top: 10, right: 10),
                 child: Align(
@@ -500,7 +497,7 @@ class _BuyTicketState extends State<BuyTicket> {
                 ),
               ),
 
-              // ปุ่ม "สลากของฉัน"
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 12, 15, 15),
                 child: Row(
@@ -546,7 +543,7 @@ class _BuyTicketState extends State<BuyTicket> {
                 ),
               ),
 
-              // ช่องกรอก "เลข 6 หลัก" + ปุ่มแว่น
+         
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
@@ -618,16 +615,16 @@ class _BuyTicketState extends State<BuyTicket> {
 
               const SizedBox(height: 12),
 
-              // รายการสลาก (ตัวอย่างจาก viewTickets)
+          
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   itemCount: viewTickets.length,
                   itemBuilder: (_, i) {
                     final Map<String, dynamic> t =
-                        viewTickets[i]; // 1) ประกาศ t ก่อน
+                        viewTickets[i]; 
                     final String six = _toSixDigits(
-                        (t['number'] as String?) ?? ''); // 2) แล้วค่อยใช้ t
+                        (t['number'] as String?) ?? '');
                     final bool isSold = (t['soldOut'] == true);
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),

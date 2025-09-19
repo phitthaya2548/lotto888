@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:lotto/config/config.dart';
 import 'package:lotto/pages/admin/widgets/app_headeradmin.dart';
 
 class ResetAdmin extends StatefulWidget {
@@ -12,8 +16,29 @@ class ResetAdmin extends StatefulWidget {
 class _ResetAdminState extends State<ResetAdmin> {
   bool _busy = false;
 
+  String _apiBase = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig();
+  }
+
+  Future<void> _loadConfig() async {
+    final config = await Configuration.getConfig();
+    setState(() {
+      _apiBase = (config['apiEndpoint'] ?? '');
+    });
+  }
 
   void _showConfirmReset() {
+    if (_apiBase.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ยังไม่ได้ตั้งค่า API Endpoint')),
+      );
+      return;
+    }
+
     Get.defaultDialog(
       title: "รีเซ็ทระบบ",
       titleStyle: const TextStyle(
@@ -50,7 +75,8 @@ class _ResetAdminState extends State<ResetAdmin> {
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey.shade300,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: () => Get.back(),
           child: const Text("ยกเลิก", style: TextStyle(color: Colors.black)),
@@ -58,38 +84,64 @@ class _ResetAdminState extends State<ResetAdmin> {
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          onPressed: _busy ? null : () async {
-            Get.back();
-            await _performReset();
-          },
+          onPressed: _busy
+              ? null
+              : () async {
+                  Get.back();
+                  await _performReset();
+                },
           child: const Text("ยืนยัน", style: TextStyle(color: Colors.white)),
         ),
       ],
     );
   }
 
-  Future<void> _performReset() async {
-    setState(() => _busy = true);
+ Future<void> _performReset() async {
+  setState(() {
+    _busy = true;
+  });
 
-    try {
-
-      await Future.delayed(const Duration(seconds: 1));
-
+  try {
+    if (_apiBase.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('รีเซ็ทระบบสำเร็จ')),
+        const SnackBar(content: Text('ยังไม่ได้ตั้งค่า API Endpoint')),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('รีเซ็ทไม่สำเร็จ: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
+      return;
     }
-  }
+
+    final uri = Uri.parse("$_apiBase/dataadmin/resetall");
+    final resp = await http.get(uri);
+    final data = jsonDecode(resp.body);
+
+    final ok = resp.statusCode == 200 && (data?['success'] == true);
+    final msg = data?['message'] ??
+        (ok
+            ? 'รีเซ็ทระบบสำเร็จ'
+            : 'เกิดข้อผิดพลาด: ${resp.statusCode} ${resp.reasonPhrase ?? ''}');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: ok ? Colors.green : Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('รีเซ็ทไม่สำเร็จ: $e'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } 
+}
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +176,8 @@ class _ResetAdminState extends State<ResetAdmin> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("• ",
-                          style: TextStyle(fontSize: 16, color: Colors.black54)),
+                          style:
+                              TextStyle(fontSize: 16, color: Colors.black54)),
                       Expanded(
                         child: Text(
                           "ลบข้อมูลการซื้อ lotto ออกทั้งหมด",
@@ -138,7 +191,8 @@ class _ResetAdminState extends State<ResetAdmin> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("• ",
-                          style: TextStyle(fontSize: 16, color: Colors.black54)),
+                          style:
+                              TextStyle(fontSize: 16, color: Colors.black54)),
                       Expanded(
                         child: Text(
                           "จะเหลือแค่ข้อมูลเจ้าของระบบ",
@@ -165,7 +219,8 @@ class _ResetAdminState extends State<ResetAdmin> {
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.6,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : const Text(
@@ -178,6 +233,11 @@ class _ResetAdminState extends State<ResetAdmin> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  if (_apiBase.isNotEmpty)
+                    Text("API: $_apiBase",
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54)),
                 ],
               ),
             ),

@@ -146,7 +146,7 @@ class _MemberShellState extends State<MemberShell> {
                   labelTextStyle: MaterialStateProperty.resolveWith((states) {
                     final selected = states.contains(MaterialState.selected);
                     return TextStyle(
-                      fontSize: selected ? 15 : 14,
+                      fontSize: selected ? 13 : 12,
                       fontWeight: FontWeight.bold,
                       color: selected ? Color(0xFF007BFF) : Colors.grey,
                     );
@@ -193,7 +193,7 @@ class _MemberShellState extends State<MemberShell> {
                         colorFilter: const ColorFilter.mode(
                             Color(0xFF007BFF), BlendMode.srcIn),
                       ),
-                      label: 'ตรวจลอตโต้',
+                      label: 'เช็คลอตโต้',
                     ),
                     NavigationDestination(
                       icon: Image.asset(

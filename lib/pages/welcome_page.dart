@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lotto/pages/login.dart';
-
 import 'register.dart';
 
 class WelcomePage extends StatelessWidget {
@@ -15,7 +14,7 @@ class WelcomePage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-           colors: [Color(0xFF7EC3FF), Color(0xFF59AFFB)],
+            colors: [Color(0xFF7EC3FF), Color(0xFF59AFFB)],
           ),
         ),
         width: MediaQuery.of(context).size.width,
@@ -27,14 +26,14 @@ class WelcomePage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: Image.asset(
+                  Stack(
+                    children: [
+                      Image.asset(
                         'assets/images/Logo.png',
                         fit: BoxFit.contain,
-                      )),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 0),
                   Card(
                     elevation: 10,

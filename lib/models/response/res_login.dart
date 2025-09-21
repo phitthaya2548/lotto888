@@ -31,14 +31,14 @@ class Responselogin {
 class User {
     int id;
     String username;
-    String fullName;
+    String? fullName;
     String phone;
     String role;
 
     User({
         required this.id,
         required this.username,
-        required this.fullName,
+        this.fullName,
         required this.phone,
         required this.role,
     });

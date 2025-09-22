@@ -21,6 +21,7 @@ class _RegisterPageState extends State<Register> {
   final _confirm = TextEditingController();
   final _phone = TextEditingController();
   final _money = TextEditingController();
+  final _fullName = TextEditingController(); // เพิ่มตัวควบคุมสำหรับ full_name
 
   bool _showPass = false;
   bool _submitting = false;
@@ -45,6 +46,7 @@ class _RegisterPageState extends State<Register> {
     _confirm.dispose();
     _phone.dispose();
     _money.dispose();
+    _fullName.dispose(); // เพิ่มการ dispose ของตัวควบคุม full_name
     super.dispose();
   }
 
@@ -66,6 +68,7 @@ class _RegisterPageState extends State<Register> {
         "password": _password.text,
         "phone": _phone.text.trim(),
         "money": double.tryParse(_money.text.trim()) ?? 0,
+        "full_name": _fullName.text.trim(), // เพิ่มฟิลด์ full_name
       };
 
       final resp = await http.post(
@@ -148,12 +151,25 @@ class _RegisterPageState extends State<Register> {
                               ),
                             ),
                             const SizedBox(height: 20),
+
+                            // Full Name
+                            TextFormField(
+                              controller: _fullName,
+                              textInputAction: TextInputAction.next,
+                              decoration: _decorate("Full Name", 'assets/images/user.png'),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty)
+                                  return "กรอกชื่อเต็ม";
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
                             // Username
                             TextFormField(
                               controller: _username,
                               textInputAction: TextInputAction.next,
-                              decoration: _decorate(
-                                  "Username", 'assets/images/User_alt.png'),
+                              decoration: _decorate("Username", 'assets/images/User_alt.png'),
                               validator: (v) => (v == null || v.trim().isEmpty)
                                   ? "กรอก Username"
                                   : null,
@@ -165,8 +181,7 @@ class _RegisterPageState extends State<Register> {
                               controller: _email,
                               textInputAction: TextInputAction.next,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: _decorate(
-                                  "Email", 'assets/images/email.png'),
+                              decoration: _decorate("Email", 'assets/images/email.png'),
                               validator: (v) {
                                 final s = v?.trim() ?? '';
                                 if (s.isEmpty) return "กรอก Email";
@@ -187,8 +202,7 @@ class _RegisterPageState extends State<Register> {
                                 FilteringTextInputFormatter.digitsOnly,
                                 LengthLimitingTextInputFormatter(10),
                               ],
-                              decoration: _decorate(
-                                  "Phone", 'assets/images/p1.png'),
+                              decoration: _decorate("Phone", 'assets/images/p1.png'),
                             ),
                             const SizedBox(height: 12),
 
@@ -200,8 +214,7 @@ class _RegisterPageState extends State<Register> {
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                               ],
-                              decoration: _decorate(
-                                  "Money", 'assets/images/m1.png'),
+                              decoration: _decorate("Money", 'assets/images/m1.png'),
                               validator: (v) {
                                 final s = (v ?? '').trim();
                                 if (s.isEmpty) return "กรอกจำนวนเงินเริ่มต้น";
@@ -244,8 +257,7 @@ class _RegisterPageState extends State<Register> {
                               controller: _confirm,
                               textInputAction: TextInputAction.done,
                               obscureText: !_showPass,
-                              decoration: _decorate(
-                                  "Confirm Password", 'assets/images/lock.png'),
+                              decoration: _decorate("Confirm Password", 'assets/images/lock.png'),
                               validator: (v) => (v == _password.text)
                                   ? null
                                   : "รหัสผ่านไม่ตรงกัน",

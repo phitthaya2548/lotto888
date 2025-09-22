@@ -153,7 +153,7 @@ class _WalletLottoState extends State<WalletLotto> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Available Balance",
+                          "ยอดเงินคงเหลือ",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -190,7 +190,7 @@ class _WalletLottoState extends State<WalletLotto> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: const Text(
-                  "Transactions",
+                  "รายการ",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

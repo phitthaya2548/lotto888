@@ -21,7 +21,7 @@ class _RegisterPageState extends State<Register> {
   final _confirm = TextEditingController();
   final _phone = TextEditingController();
   final _money = TextEditingController();
-  final _fullName = TextEditingController(); // เพิ่มตัวควบคุมสำหรับ full_name
+
 
   bool _showPass = false;
   bool _submitting = false;
@@ -46,7 +46,6 @@ class _RegisterPageState extends State<Register> {
     _confirm.dispose();
     _phone.dispose();
     _money.dispose();
-    _fullName.dispose(); // เพิ่มการ dispose ของตัวควบคุม full_name
     super.dispose();
   }
 
@@ -68,7 +67,6 @@ class _RegisterPageState extends State<Register> {
         "password": _password.text,
         "phone": _phone.text.trim(),
         "money": double.tryParse(_money.text.trim()) ?? 0,
-        "full_name": _fullName.text.trim(), // เพิ่มฟิลด์ full_name
       };
 
       final resp = await http.post(
@@ -152,18 +150,7 @@ class _RegisterPageState extends State<Register> {
                             ),
                             const SizedBox(height: 20),
 
-                            // Full Name
-                            TextFormField(
-                              controller: _fullName,
-                              textInputAction: TextInputAction.next,
-                              decoration: _decorate("Full Name", 'assets/images/user.png'),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty)
-                                  return "กรอกชื่อเต็ม";
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 12),
+                           
 
                             // Username
                             TextFormField(

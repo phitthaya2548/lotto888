@@ -67,6 +67,7 @@ class _LoginPageState extends State<LoginPage> {
           (resp.headers['content-type'] ?? '').toLowerCase().contains('json');
 
       if (resp.statusCode == 200) {
+        // พยายาม parse เป็นโมเดล ถ้าไม่ได้ให้ fallback เป็น map
         dynamic body;
         try {
           body = isJson ? jsonDecode(resp.body) : resp.body;
@@ -78,15 +79,19 @@ class _LoginPageState extends State<LoginPage> {
         if (body is Map<String, dynamic> || body is Map) {
           res = responseloginFromJson(jsonEncode(body));
         } else {
+          // เซิร์ฟเวอร์ตอบไม่ใช่ JSON → แจ้งเตือนชัดเจน
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('รูปแบบคำตอบไม่ถูกต้อง (ไม่ใช่ JSON)')),
+            const SnackBar(
+                content: Text('รูปแบบคำตอบไม่ถูกต้อง (ไม่ใช่ JSON)')),
           );
           return;
         }
 
+        // ป้องกัน role เป็น null / เว้นวรรคแปลก
         final role = (res.user.role ?? '').toString().trim().toUpperCase();
 
+        // เซฟ session ก่อน navigate (กันกรณีหน้าใหม่อ่าน session ไม่ทัน)
         await AuthService.saveSession(res);
 
         if (!mounted) return;
@@ -106,6 +111,7 @@ class _LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (_) => nextPage),
         );
       } else {
+        // ดึง message อย่างปลอดภัย
         String msg = 'เข้าสู่ระบบไม่สำเร็จ (${resp.statusCode})';
         if (isJson) {
           try {
@@ -117,7 +123,8 @@ class _LoginPageState extends State<LoginPage> {
           } catch (_) {}
         }
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
       }
     } on TimeoutException {
       if (!mounted) return;
@@ -205,7 +212,8 @@ class _LoginPageState extends State<LoginPage> {
                                   color: CupertinoColors.inactiveGray,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                ),
+                                ), //
+
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(22),
                                   borderSide: const BorderSide(
@@ -292,7 +300,8 @@ class _LoginPageState extends State<LoginPage> {
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.6,
                                           valueColor:
-                                              AlwaysStoppedAnimation<Color>(Colors.white),
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
                                         ),
                                       )
                                     : const Text(
